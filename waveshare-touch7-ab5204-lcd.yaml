@@ -6,6 +6,25 @@ substitutions:
   name: waveshare-touch7-ab5204
   friendly_name: WaveShare Touch7 LCD ab5204
 
+# packages:
+#   bambu_integration: !include
+#     file: common/bambu.yaml
+#   bambu_x1_carbon: !include
+#     file: common/bambu-device.yaml
+#     vars:
+#       device_name: x1_carbon
+#   bambu_a1_mini: !include
+#     file: common/bambu-device.yaml
+#     vars:
+#       device_name: a1_mini
+#   roomba: !include
+#     file: common/roomba.yaml
+#     vars:
+#       device_name: alfred
+#   weather: !include
+#     file: common/weather.yaml
+
+
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -13,13 +32,17 @@ esphome:
   platformio_options:
     board_build.flash_mode: dio
     build_flags: "-DBOARD_HAS_PSRAM"
-    board_build.arduino.memory_type: qio_opi
+    board_build.esp-idf.memory_type: qio_opi
     board_upload.maximum_ram_size: 524288
+    board_build.flash_size: 8MB
+
   on_boot:
-    - delay: 5s
-    - lvgl.widget.hide: boot_screen
-    - lvgl.page.show:
-        id: main_page
+    - priority: 500
+      then:
+        - delay: 5s
+        - lvgl.widget.hide: boot_screen
+        - lvgl.page.show:
+            id: main_page
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -77,17 +100,9 @@ captive_portal:
 # Enable Home Assistant API
 api:
   on_client_connected:
-    - if:
-        condition:
-          lambda: 'return (0 == client_info.find("Home Assistant "));'
-        then:
-          - lvgl.widget.show: lbl_hastatus
+    - lvgl.widget.show: lbl_hastatus
   on_client_disconnected:
-    - if:
-        condition:
-          lambda: 'return (0 == client_info.find("Home Assistant "));'
-        then:
-          - lvgl.widget.hide: lbl_hastatus
+    - lvgl.widget.hide: lbl_hastatus
 ota:
   platform: esphome
 
