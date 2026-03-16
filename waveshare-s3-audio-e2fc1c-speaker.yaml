@@ -1,0 +1,394 @@
+###############################################################################
+# NOTES #######################################################################
+###############################################################################
+
+# https://www.waveshare.com/esp32-s3-audio-board.htm
+# https://www.waveshare.com/wiki/ESP32-S3-AUDIO-Board#Resources
+
+# https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice/blob/main/waveshare-s3-audio.yaml
+
+###############################################################################
+# BASE DEVICE CONFIG ##########################################################
+###############################################################################
+
+substitutions:
+  name: waveshare-s3-audio-e2fc1c
+  friendly_name: WaveShare S3 Audio e2fc1c Audio
+
+
+  i2s_mclk: GPIO12
+  i2s_bclk: GPIO13 #SCLK
+  i2s_lrclk: GPIO14 #LRCK/WS
+
+  amp_ctrl: 8 #9 #Extended IO pin that controls the PA_EN on the TCA9555
+  i2c_scl: GPIO10
+  i2c_sda: GPIO11
+  rtc_int: 5 #ExtendedIO
+
+  #mic lookup
+  mic_channel_0: 'left'
+  mic_channel_1: 'right' # mic wont allow right
+  mic_channel_2: 'stereo' # voice assistant does not support stereo
+
+  #WORKING
+  which_mic: 0 #0=left, 1=right, 2=stereo
+  i2s_sample_rate: 16000 # Works as in sync with microphone (mic must have 16000 for voice assistant)
+  i2s_bits_per_sample: 32
+  #i2s_bits_per_sample: 16
+  i2s_mode_mic: secondary
+  i2s_mode_speaker: secondary
+  i2s_use_apll: true
+  i2s_bps_spk: 16bit
+  i2s_bps_mic: 16bit
+  i2s_mclk_multiple: 256 # 128, 256, 384, 512
+
+  hidden_ssid: "false"
+  led_num: '7' # WS2812 ring leds
+
+
+
+
+packages:
+  - !include common/package_wifi.yaml
+  - !include common/package_api.yaml
+  - !include common/package_ha_base.yaml
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+  platformio_options:
+    board_build.flash_mode: dio
+
+esp32:
+  board: esp32-s3-devkitc-1
+  cpu_frequency: 240MHz
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+
+      # Considerably speeds up mWW at the cost of using more PSRAM.
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
+   
+psram:
+  mode: octal
+  speed: 80MHz
+
+
+################################################################################
+
+# Wifi information
+
+# Enable Home Assistant API
+
+# Enable logging
+logger:
+
+
+
+###############################################################################
+# INPUTS & OUTPUTS ############################################################
+###############################################################################
+
+i2c:
+  - id: internal_i2c
+    sda: GPIO11
+    scl: GPIO10
+    scan: true
+    frequency: 100kHz
+
+
+# I/O Expander that controls the amplifier enable pin
+tca9555:
+  id: ioexp
+  i2c_id: internal_i2c
+  address: 0x20
+
+
+
+
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: status_ring
+    name: "Status Ring"
+    pin: GPIO38
+    num_leds: ${led_num}
+    chipset: WS2812
+    rgb_order: RGB
+    default_transition_length: 150ms
+    effects:
+      - pulse:
+          name: "Pulse Slow"
+          min_brightness: 30%
+          max_brightness: 100%
+          transition_length: 1000ms
+          update_interval: 16ms
+      - pulse:
+          name: "Pulse Medium"
+          min_brightness: 30%
+          max_brightness: 100%
+          transition_length: 600ms
+          update_interval: 16ms
+      - pulse:
+          name: "Pulse Fast"
+          min_brightness: 30%
+          max_brightness: 100%
+          transition_length: 300ms
+          update_interval: 16ms
+      - addressable_rainbow:
+          name: "Rainbow Slow"
+          speed: 6
+          width: 7
+      - addressable_color_wipe:
+          name: "Wipe"
+
+
+
+
+
+i2s_audio:
+  # - id: i2s_input
+  #   i2s_lrclk_pin:  
+  #     number: $i2s_lrclk
+  #     allow_other_uses: true
+  #   i2s_bclk_pin:  
+  #     number: $i2s_bclk
+  #     allow_other_uses: true
+
+  - id: i2s_output
+    i2s_lrclk_pin: 
+      number: $i2s_lrclk
+      #allow_other_uses: true
+    i2s_bclk_pin:  
+      number: $i2s_bclk
+      #allow_other_uses: true
+    i2s_mclk_pin:
+      number: $i2s_mclk
+
+# audio_adc:
+#   - platform: es7210
+#     id: adc_mic
+#     i2c_id: internal_i2c
+#     sample_rate: $i2s_sample_rate
+#     bits_per_sample: $i2s_bps_mic
+    #bits_per_sample: "${i2s_bits_per_sample}bit"
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: internal_i2c
+    use_mclk: true
+    sample_rate: $i2s_sample_rate
+    bits_per_sample: $i2s_bps_spk
+    #bits_per_sample: "${i2s_bits_per_sample}bit"
+    #force_master: true
+    #mclk_multiple: $i2s_mclk_multiple
+
+
+# microphone:
+#   - platform: i2s_audio
+#     id: i2s_mics
+#     i2s_din_pin: GPIO15
+#     adc_type: external
+#     pdm: false
+#     i2s_audio_id: i2s_input
+#     i2s_mode: $i2s_mode_mic
+
+#     #sample_rate: $i2s_sample_rate
+#     sample_rate: 16000
+
+#     bits_per_sample: $i2s_bps_mic
+#     #bits_per_sample: "${i2s_bits_per_sample}bit"
+
+#     use_apll: $i2s_use_apll
+#     mclk_multiple: $i2s_mclk_multiple
+#     #channel: stereo
+#     channel: ${mic_channel_${which_mic}}
+
+
+
+
+speaker:
+  - platform: i2s_audio
+    id: i2s_audio_speaker
+    i2s_dout_pin: GPIO16
+    
+    i2s_audio_id: i2s_output
+    #i2s_mode: secondary #using the patched es8311
+
+    dac_type: external
+    timeout: never
+    buffer_duration: 100ms
+    audio_dac: es8311_dac
+    sample_rate: $i2s_sample_rate
+    #bits_per_sample: "${i2s_bits_per_sample}bit"
+    #bits_per_sample: $i2s_bps_spk
+    bits_per_sample: 16bit #TEMP FIX
+    use_apll: $i2s_use_apll
+    mclk_multiple: $i2s_mclk_multiple
+    #channel: mono #WORKS
+    channel: stereo #WORKS #TEST: STREAM ERROR
+    #channel: ${mic_channel_${which_mic}}
+
+  # Virtual speakers to combine the announcement and media streams together into one output
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: i2s_audio_speaker
+    num_channels: 2
+    source_speakers:
+      - id: announcement_mixing_input
+        timeout: never
+      - id: media_mixing_input
+        timeout: never
+
+  # Vritual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+
+
+
+media_player:
+  - platform: speaker
+    id: external_media_player
+    name: None
+    internal: False
+    volume_increment: 0.01
+    volume_min: 0.4
+    volume_max: 0.8
+    announcement_pipeline:
+      speaker: announcement_resampling_speaker
+      format: FLAC     # FLAC is the least processor intensive codec
+      num_channels: 1  # Stereo audio is unnecessary for announcements
+      sample_rate: 48000 #Supported by Music Assistant
+    media_pipeline:
+      speaker: media_resampling_speaker
+      format: FLAC     # FLAC is the least processor intensive codec
+      sample_rate: 48000
+    on_announcement:
+      - mixer_speaker.apply_ducking:
+          id: media_mixing_input
+          decibel_reduction: 20
+          duration: 0.0s
+    on_state:
+      if:
+        condition:
+          - not:
+              media_player.is_announcing:
+        then:
+          - mixer_speaker.apply_ducking:
+              id: media_mixing_input
+              decibel_reduction: 0
+              duration: 1.0s
+
+
+binary_sensor:
+  - platform: gpio
+    name: "Key1"
+    pin:
+      tca9555: ioexp
+      number: 9 # not '12' as schematics say!
+      inverted: true
+
+  - platform: gpio
+    name: "Key2"
+    pin:
+      tca9555: ioexp
+      number: 10
+      inverted: true
+
+  - platform: gpio
+    name: "Key3"
+    pin:
+      tca9555: ioexp
+      number: 11
+      inverted: true
+
+
+switch:
+  # - platform: template  #TODO: make react live
+  #   id: diag_disable_mic
+  #   name: "Diag: disable microphone"
+  #   optimistic: true
+  #   restore_mode: RESTORE_DEFAULT_ON  # default OFF = mic works as usual
+
+  - platform: gpio
+    id: amp_enable_8
+    name: Amplifier
+    icon: mdi:speaker
+    entity_category: config
+    pin:
+      tca9555: ioexp
+      number: $amp_ctrl
+      inverted: false
+    restore_mode: RESTORE_DEFAULT_ON
+
+
+
+
+###############################################################################
+# VARIABLES & SCRIPTS #########################################################
+###############################################################################
+
+
+
+
+script:
+  - id: flash_ring
+    then:
+      - light.turn_on: { id: status_ring, red: 1.0, green: 0.0, blue: 0.0, brightness: 100% }
+      - delay: 250ms
+      - light.turn_off: status_ring
+
+
+
+time:
+  - platform: homeassistant
+  #- platform: pcf85063
+    id: rtc
+  #  address: 0x51
+    #RTC_INT = $rtc_int # extIO 5
+  #  i2c_id: internal_i2c
+    on_time_sync:
+      then:
+        - logger.log: "Synchronized system clock"
+
+
+
+###############################################################################
+# HOME ASSISTANT BUTTONS ######################################################
+###############################################################################
+
+
+
+
+
+###############################################################################
+# SENSORS #####################################################################
+###############################################################################
+
+#binary_sensor:
+
+#text_sensor:
+
+#sensor:
+
+# HomeAssistant Sensors
+

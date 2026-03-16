@@ -1,0 +1,68 @@
+###############################################################################
+# NOTES #######################################################################
+###############################################################################
+
+# https://www.waveshare.com/esp32-s3-audio-board.htm
+# https://www.waveshare.com/wiki/ESP32-S3-AUDIO-Board#Resources
+
+
+###############################################################################
+# BASE DEVICE CONFIG ##########################################################
+###############################################################################
+
+substitutions:
+  name: waveshare-s3-audio-e2fc1c
+  friendly_name: WaveShare S3 Audio e2fc1c Base
+
+packages:
+  - !include common/package_wifi.yaml
+  - !include common/package_api.yaml
+  - !include common/package_ha_base.yaml
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+  platformio_options:
+    board_build.flash_mode: dio
+
+esp32:
+  board: esp32-s3-devkitc-1
+  cpu_frequency: 240MHz
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+
+      # Considerably speeds up mWW at the cost of using more PSRAM.
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
+   
+psram:
+  mode: octal
+  speed: 80MHz
+
+
+################################################################################
+
+# Wifi information
+
+# Enable Home Assistant API
+
+# Enable logging
+logger:
+
+###############################################################################
+# HOME ASSISTANT BUTTONS ######################################################
+###############################################################################
