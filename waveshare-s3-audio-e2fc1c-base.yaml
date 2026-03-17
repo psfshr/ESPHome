@@ -15,8 +15,7 @@ substitutions:
   friendly_name: WaveShare S3 Audio e2fc1c Base
 
 packages:
-  - !include common/package_wifi.yaml
-  - !include common/package_api.yaml
+  - !include common/package_connectivity.yaml
   - !include common/package_ha_base.yaml
 
 esphome:

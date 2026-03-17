@@ -8,13 +8,12 @@
 # https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice/blob/main/waveshare-s3-audio.yaml
 
 ###############################################################################
-# BASE DEVICE CONFIG ##########################################################
+# SUBSTITUTIONS & PACKAGES ####################################################
 ###############################################################################
 
 substitutions:
   name: waveshare-s3-audio-e2fc1c
-  friendly_name: WaveShare S3 Audio e2fc1c Audio
-
+  friendly_name: WaveShare S3 Audio e2fc1c Speaker
 
   i2s_mclk: GPIO12
   i2s_bclk: GPIO13 #SCLK
@@ -42,16 +41,16 @@ substitutions:
   i2s_bps_mic: 16bit
   i2s_mclk_multiple: 256 # 128, 256, 384, 512
 
-  hidden_ssid: "false"
   led_num: '7' # WS2812 ring leds
 
-
-
-
 packages:
-  - !include common/package_wifi.yaml
-  - !include common/package_api.yaml
+  - !include common/package_connectivity.yaml
   - !include common/package_ha_base.yaml
+
+
+###############################################################################
+# BASE DEVICE CONFIG ##########################################################
+###############################################################################
 
 esphome:
   name: ${name}
@@ -88,19 +87,33 @@ psram:
   speed: 80MHz
 
 
-################################################################################
+###############################################################################
+# CONNECTIVITY ################################################################
+###############################################################################
 
-# Wifi information
+# Wifi information - In Package
 
-# Enable Home Assistant API
+# Home Assistant API - In Package
 
-# Enable logging
-logger:
+# Logging - In Package
 
+# Time - In Package
 
 
 ###############################################################################
-# INPUTS & OUTPUTS ############################################################
+# VARIABLES & SCRIPTS #########################################################
+###############################################################################
+
+script:
+  - id: flash_ring
+    then:
+      - light.turn_on: { id: status_ring, red: 1.0, green: 0.0, blue: 0.0, brightness: 100% }
+      - delay: 250ms
+      - light.turn_off: status_ring
+
+
+###############################################################################
+# DEVICE INPUTS & OUTPUTS #####################################################
 ###############################################################################
 
 i2c:
@@ -110,7 +123,6 @@ i2c:
     scan: true
     frequency: 100kHz
 
-
 # I/O Expander that controls the amplifier enable pin
 tca9555:
   id: ioexp
@@ -118,8 +130,9 @@ tca9555:
   address: 0x20
 
 
-
-
+###############################################################################
+# DEVICE LIGHTS & AUDIO #######################################################
+###############################################################################
 
 light:
   - platform: esp32_rmt_led_strip
@@ -131,34 +144,12 @@ light:
     rgb_order: RGB
     default_transition_length: 150ms
     effects:
-      - pulse:
-          name: "Pulse Slow"
-          min_brightness: 30%
-          max_brightness: 100%
-          transition_length: 1000ms
-          update_interval: 16ms
-      - pulse:
-          name: "Pulse Medium"
-          min_brightness: 30%
-          max_brightness: 100%
-          transition_length: 600ms
-          update_interval: 16ms
-      - pulse:
-          name: "Pulse Fast"
-          min_brightness: 30%
-          max_brightness: 100%
-          transition_length: 300ms
-          update_interval: 16ms
       - addressable_rainbow:
           name: "Rainbow Slow"
           speed: 6
           width: 7
       - addressable_color_wipe:
           name: "Wipe"
-
-
-
-
 
 i2s_audio:
   # - id: i2s_input
@@ -194,10 +185,8 @@ audio_dac:
     use_mclk: true
     sample_rate: $i2s_sample_rate
     bits_per_sample: $i2s_bps_spk
-    #bits_per_sample: "${i2s_bits_per_sample}bit"
     #force_master: true
     #mclk_multiple: $i2s_mclk_multiple
-
 
 # microphone:
 #   - platform: i2s_audio
@@ -207,26 +196,18 @@ audio_dac:
 #     pdm: false
 #     i2s_audio_id: i2s_input
 #     i2s_mode: $i2s_mode_mic
-
 #     #sample_rate: $i2s_sample_rate
 #     sample_rate: 16000
-
 #     bits_per_sample: $i2s_bps_mic
-#     #bits_per_sample: "${i2s_bits_per_sample}bit"
-
 #     use_apll: $i2s_use_apll
 #     mclk_multiple: $i2s_mclk_multiple
 #     #channel: stereo
 #     channel: ${mic_channel_${which_mic}}
 
-
-
-
 speaker:
   - platform: i2s_audio
     id: i2s_audio_speaker
     i2s_dout_pin: GPIO16
-    
     i2s_audio_id: i2s_output
     #i2s_mode: secondary #using the patched es8311
 
@@ -235,9 +216,7 @@ speaker:
     buffer_duration: 100ms
     audio_dac: es8311_dac
     sample_rate: $i2s_sample_rate
-    #bits_per_sample: "${i2s_bits_per_sample}bit"
-    #bits_per_sample: $i2s_bps_spk
-    bits_per_sample: 16bit #TEMP FIX
+    bits_per_sample: $i2s_bps_spk
     use_apll: $i2s_use_apll
     mclk_multiple: $i2s_mclk_multiple
     #channel: mono #WORKS
@@ -262,8 +241,6 @@ speaker:
   - platform: resampler
     id: media_resampling_speaker
     output_speaker: media_mixing_input
-
-
 
 media_player:
   - platform: speaker
@@ -299,6 +276,37 @@ media_player:
               duration: 1.0s
 
 
+
+
+###############################################################################
+# DEVICE CONTROLS #############################################################
+###############################################################################
+
+switch:
+  # - platform: template  #TODO: make react live
+  #   id: diag_disable_mic
+  #   name: "Diag: disable microphone"
+  #   optimistic: true
+  #   restore_mode: RESTORE_DEFAULT_ON  # default OFF = mic works as usual
+
+  - platform: gpio
+    id: amp_enable_8
+    name: Amplifier
+    icon: mdi:speaker
+    entity_category: config
+    pin:
+      tca9555: ioexp
+      number: $amp_ctrl
+      inverted: false
+    restore_mode: RESTORE_DEFAULT_ON
+
+
+
+###############################################################################
+# DEVICE SENSORS ##############################################################
+###############################################################################
+
+#binary_sensor:
 binary_sensor:
   - platform: gpio
     name: "Key1"
@@ -322,73 +330,10 @@ binary_sensor:
       inverted: true
 
 
-switch:
-  # - platform: template  #TODO: make react live
-  #   id: diag_disable_mic
-  #   name: "Diag: disable microphone"
-  #   optimistic: true
-  #   restore_mode: RESTORE_DEFAULT_ON  # default OFF = mic works as usual
-
-  - platform: gpio
-    id: amp_enable_8
-    name: Amplifier
-    icon: mdi:speaker
-    entity_category: config
-    pin:
-      tca9555: ioexp
-      number: $amp_ctrl
-      inverted: false
-    restore_mode: RESTORE_DEFAULT_ON
-
-
-
-
 ###############################################################################
-# VARIABLES & SCRIPTS #########################################################
+# HOME ASSISTANT SENSORS ######################################################
 ###############################################################################
-
-
-
-
-script:
-  - id: flash_ring
-    then:
-      - light.turn_on: { id: status_ring, red: 1.0, green: 0.0, blue: 0.0, brightness: 100% }
-      - delay: 250ms
-      - light.turn_off: status_ring
-
-
-
-time:
-  - platform: homeassistant
-  #- platform: pcf85063
-    id: rtc
-  #  address: 0x51
-    #RTC_INT = $rtc_int # extIO 5
-  #  i2c_id: internal_i2c
-    on_time_sync:
-      then:
-        - logger.log: "Synchronized system clock"
-
-
-
-###############################################################################
-# HOME ASSISTANT BUTTONS ######################################################
-###############################################################################
-
-
-
-
-
-###############################################################################
-# SENSORS #####################################################################
-###############################################################################
-
-#binary_sensor:
 
 #text_sensor:
 
 #sensor:
-
-# HomeAssistant Sensors
-

@@ -7,8 +7,7 @@ substitutions:
   friendly_name: WaveShare Touch7 LCD ab5204
 
 packages:
-  - !include common/package_wifi.yaml
-  - !include common/package_api.yaml
+  - !include common/package_connectivity.yaml
   - !include common/package_ha_base.yaml
 #   bambu_integration: !include
 #     file: common/bambu.yaml

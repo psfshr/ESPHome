@@ -8,3 +8,10 @@ wifi:
   power_save_mode: NONE
 
 captive_portal:
+
+api:
+
+ota:
+  platform: esphome
+
+logger:
