@@ -13,7 +13,7 @@
 
 substitutions:
   name: waveshare-s3-audio-e2fc1c
-  friendly_name: WaveShare S3 Audio e2fc1c Speaker
+  friendly_name: Study S3 Audio e2fc1c Speaker
 
   i2s_mclk: GPIO12
   i2s_bclk: GPIO13 #SCLK
