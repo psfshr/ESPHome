@@ -1,0 +1,328 @@
+###############################################################################
+# NOTES #######################################################################
+###############################################################################
+
+# Ref
+# https://github.com/Incipiens/Adam-Home-Assistant-Snippets/blob/main/ESPHome/reTerminal%20E1002%20-%20Immich/reTerminal-immich.yaml
+
+# SDCard
+# 3 SS
+# 4 MOSI
+# 5 SCK
+# 6 MISO
+# 7 CD
+
+# ePaper Panel
+# 35 BUSY
+# 36 RST
+# 37 DC
+# 38 CS
+# 39 CLK
+# 40 MOSI
+
+# LEDs
+# 2 LED
+
+# Other
+# 41 Input 1
+# 42 Input 2
+# 8 Relay
+
+# 21 Relay
+
+###############################################################################
+# BASE DEVICE CONFIG ##########################################################
+###############################################################################
+
+substitutions:
+  name: revk-epd-731bac
+  friendly_name: RevK EPD 731bac ePaper Photo
+
+  ha_url: "http://lundy.tgv.home:5000"
+  image_path: "/get_image"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.flash_size: 8MB
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+    version: recommended
+   
+psram:
+  mode: quad
+  speed: 80MHz
+
+
+################################################################################
+
+# Wifi information
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: ${name}
+    password: ${name}
+  power_save_mode: NONE
+#  use_address: ${name}.tgv.home
+  on_connect: 
+    then:
+      - logger.log: "Updating image"
+      - script.execute: fetch_and_display
+
+captive_portal:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  platform: esphome
+
+# Enable logging
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+
+http_request:
+  verify_ssl: false
+  timeout: 20s
+  watchdog_timeout: 25s
+
+###############################################################################
+# INPUTS / OUTPUTS / MODULES ##################################################
+###############################################################################
+
+
+online_image:
+  - url: "${ha_url}${image_path}"
+    id: frame_image
+    format: png
+    buffer_size: 65536
+    type: BINARY #RGB565
+    resize: 800x480
+    on_download_finished:
+      then:
+        - logger.log: "Image downloaded, updating display..."
+        - component.update: eink_display
+#        - delay: 45s
+#        - logger.log: "Display refresh complete, entering deep sleep..."
+#        - deep_sleep.enter: deep_sleep_1
+    on_error:
+      then:
+        - logger.log: "Image download FAILED"
+#        - delay: 30s
+#        - deep_sleep.enter: deep_sleep_1
+
+
+# Pins for Waveshare ePaper ESP Board
+spi:
+  clk_pin: GPIO39
+  mosi_pin: GPIO40
+
+light:
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    pin: GPIO2
+    num_leds: 25
+    chipset: ws2812
+    name: "Edge LEDs"
+    id: edge_leds
+    effects:
+      - addressable_rainbow:
+          name: Rainbow Effect With Custom Values
+          speed: 10
+          width: 50
+      - addressable_color_wipe:
+          name: Color Wipe Effect With Custom Values
+          colors:
+            - red: 100%
+              green: 0%
+              blue: 0%
+              num_leds: 5
+              gradient: true
+            - red: 0%
+              green: 100%
+              blue: 0%
+              num_leds: 5
+              gradient: true
+            - red: 0%
+              green: 0%
+              blue: 100%
+              num_leds: 5
+              gradient: true
+            - red: 0%
+              green: 0%
+              blue: 0%
+              num_leds: 1
+          add_led_interval: 100ms
+          reverse: false
+
+###############################################################################
+# VARIABLES & SCRIPTS #########################################################
+###############################################################################
+
+# Global variables for detecting if the display needs to be refreshed
+globals:
+  - id: data_updated
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: initial_data_received
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: time_since_refresh
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: recorded_display_refresh
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+script:
+  - id: fetch_and_display
+    then:
+      - logger.log: "Fetching image from Home Assistant..."
+      - online_image.set_url:
+          id: frame_image
+          url: "${ha_url}${image_path}"
+      - component.update: frame_image
+
+# Check whether the display needs to be refreshed
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time_sync:
+      then:
+        - logger.log: "Synchronized system clock"
+    on_time:
+      - seconds: 0
+        minutes: /1
+        then:
+          - logger.log: "Updating image"
+          - script.execute: fetch_and_display
+
+      # - seconds: 0, 10, 20, 30, 45, 50
+      #   minutes: /1
+      #   then:
+      #     - logger.log: "LEDs Off"
+      #     - light.addressable_set:
+      #         id: edge_leds
+      #         range_from: 0
+      #         range_to: 24
+      #         red: 0%
+      #         green: 0%
+      #         blue: 0%
+      # - seconds: 5, 15, 25, 35, 45, 55
+      #   minutes: /1
+      #   then:
+      #     - logger.log: "LEDs On"
+      #     - light.addressable_set:
+      #         id: edge_leds
+      #         range_from: 0
+      #         range_to: 24
+      #         red: 25%
+      #         green: 25%
+      #         blue: 25%
+
+###############################################################################
+# HOME ASSISTANT BUTTONS ######################################################
+###############################################################################
+
+button:
+  - platform: shutdown
+    name: ESP32 Shutdown
+  - platform: restart
+    name: ESP32 Restart
+  - platform: safe_mode
+    name: ESP32 Restart (Safe Mode)
+  - platform: template
+    name: ESP32 Refresh Screen
+    entity_category: config
+    on_press:
+      - script.execute: fetch_and_display
+
+switch:
+  - platform: factory_reset
+    name: ESP32 Factory Reset
+
+###############################################################################
+# BINARY SENSORS ##############################################################
+###############################################################################
+
+binary_sensor:
+  - platform: status
+    name: ESP32 Status
+
+###############################################################################
+# TEXT SENSORS ################################################################
+###############################################################################
+
+# text_sensor:
+
+
+###############################################################################
+# GENERAL SENSORS #############################################################
+###############################################################################
+
+sensor:
+    #Device UPTIME
+  - platform: uptime
+    name: ESP32 Uptime
+    id: sys_uptime
+    update_interval: 60s
+
+
+  # Device Sensors - for monitoring device remotely
+  - platform: template
+    name: Display Last Update
+    device_class: timestamp
+    entity_category: "diagnostic"
+    id: display_last_update
+    
+  - platform: template
+    name: Display Num Refresh
+    accuracy_decimals: 0
+    unit_of_measurement: "Refreshes"
+    state_class: "total_increasing"
+    entity_category: "diagnostic"
+    lambda: 'return id(recorded_display_refresh);'
+  
+  - platform: wifi_signal
+    name: ESP32 WiFi Signal
+    id: wifisignal
+    unit_of_measurement: "dBm"
+    entity_category: "diagnostic"
+    update_interval: 60s
+
+###############################################################################
+# DISPLAY RENDERING ###########################################################
+###############################################################################
+
+# Now render everything on the ePaper screen
+display:
+  - platform: waveshare_epaper
+    id: eink_display
+    cs_pin: GPIO38
+    dc_pin: GPIO37
+    busy_pin:
+      number: 35
+      inverted: True
+    reset_pin: GPIO36
+    #reset_duration: 2ms
+    model: 7.50inV2
+    update_interval: never
+    #rotation: 270°
+    lambda: |-
+        it.image(0, 0, id(frame_image), COLOR_OFF, COLOR_ON);
+        ESP_LOGD("display", "Image displayed successfully");
+
+###############################################################################
+
