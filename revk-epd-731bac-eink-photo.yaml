@@ -39,7 +39,7 @@ substitutions:
   friendly_name: RevK EPD 731bac ePaper Photo
 
   ha_url: "http://lundy.tgv.home:5000"
-  image_path: "/get_image"
+  image_path: "/image.bmp"
 
 esphome:
   name: ${name}
@@ -102,9 +102,9 @@ http_request:
 online_image:
   - url: "${ha_url}${image_path}"
     id: frame_image
-    format: png
+    format: bmp #png
     buffer_size: 65536
-    type: BINARY #RGB565
+    type: BINARY
     resize: 800x480
     on_download_finished:
       then:
@@ -319,10 +319,17 @@ display:
     #reset_duration: 2ms
     model: 7.50inV2
     update_interval: never
-    #rotation: 270°
+    rotation: 180°
     lambda: |-
-        it.image(0, 0, id(frame_image), COLOR_OFF, COLOR_ON);
-        ESP_LOGD("display", "Image displayed successfully");
+      int panel_x = it.get_width();
+      int panel_y = it.get_height();
+      int panel_x_12 = panel_x / 2;
+      int panel_y_12 = panel_y / 2;
+
+      it.fill(COLOR_ON);
+      it.image(0, 0, id(frame_image), COLOR_OFF, COLOR_ON);
+      //it.filled_circle(panel_x_12, panel_y_12, 100, COLOR_ON);
+      ESP_LOGD("display", "Image displayed successfully");
 
 ###############################################################################
 
