@@ -690,8 +690,8 @@ sensor:
 
   # Power Sensors
   - platform: homeassistant
-    entity_id: sensor.envoy_122437003414_current_power_production
-    id: envoy_122437003414_current_power_production
+    entity_id: sensor.envoy_122523000047_current_power_production
+    id: envoy_122523000047_current_power_production
     on_value:
       then:
         - lambda: 'id(data_updated) = true;'
@@ -1063,7 +1063,7 @@ display:
         it.printf(350, 290, id(text_med), COLOR_ON, TextAlign::CENTER, "%s", 
           id(envoy_current_power_production_state).state.c_str());
         it.printf(350, 330, id(text_med), COLOR_ON, TextAlign::CENTER, "%2.0f W", 
-          id(envoy_122437003414_current_power_production).state);
+          id(envoy_122523000047_current_power_production).state);
 
         it.printf(525, 250, id(text_med_bold), COLOR_ON, TextAlign::CENTER, "Battery");
         it.printf(525, 290, id(text_med), COLOR_ON, TextAlign::CENTER, "%s",
