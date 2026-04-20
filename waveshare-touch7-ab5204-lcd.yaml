@@ -173,10 +173,66 @@ switch:
 
 #text_sensor:
 
-#sensor:
+sensor:
 
 # HomeAssistant Sensors
+  # Power Sensors
+  - platform: homeassistant
+    entity_id: sensor.envoy_122523000047_current_power_production
+    id: envoy_122523000047_current_power_production
+    filters:
+      - multiply: 1000
+    on_value:
+      then:
+        - logger.log:
+            format: "Production : %.1f"
+            args: [ 'x' ]
+        - lvgl.indicator.update:
+            id: val_needle_current_production
+            value: !lambda return x;
+        - lvgl.label.update:
+            id: val_text_current_production
+            text:
+              format: "%.0f"
+              args: [ 'x' ]
 
+
+  - platform: homeassistant
+    entity_id: sensor.envoy_battery_combined_power
+    id: envoy_battery_combined_power
+
+  - platform: homeassistant
+    entity_id: sensor.encharge_492447007140_battery
+    id: encharge_492447007140_battery
+
+  - platform: homeassistant
+    entity_id: sensor.envoy_net_power_export
+    id: envoy_net_power_export
+    filters:
+      - multiply: 1000
+
+  - platform: homeassistant
+    entity_id: sensor.envoy_net_power_import
+    id: envoy_net_power_import
+
+
+
+###############################################################################
+# FONTS & TEXT ################################################################
+###############################################################################
+
+font:
+  - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_glyphs_medium
+    size: 25
+    glyphs: &mdi-glyphs
+      - "\U000F02DC" # home
+      - "\U000F0595" # weather-partly-cloudy / partlycloudy
+      - "\U000F0599" # weather-sunny / sunny
+      - "\U000F0D3E" # transmission-tower
+      - "\U000F070D" # robot-vacuum
+      - "\U000F056E" # view-dashboard
+      - "\U000F02D6" # Blank
 
 
 ###############################################################################
@@ -256,21 +312,6 @@ display:
         - 48        #g5
         - 47        #g6
         - 21        #g7
-
-
-font:
-  - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
-    id: mdi_glyphs_medium
-    size: 25
-    glyphs: &mdi-glyphs
-      - "\U000F02DC" # home
-      - "\U000F0595" # weather-partly-cloudy / partlycloudy
-      - "\U000F0599" # weather-sunny / sunny
-      - "\U000F0D3E" # transmission-tower
-      - "\U000F070D" # robot-vacuum
-      - "\U000F056E" # view-dashboard
-      - "\U000F02D6" # Blank
-
 
 
 ###############################################################################
@@ -497,121 +538,85 @@ lvgl:
         - label:
             align: CENTER
             text: 'First Page'
-        # - obj: # Container for the Energy gauge?
-        #     x: 10
-        #     y: 60
-        #     height: 200
-        #     width: 200
-        #     align: TOP_LEFT
-        #     bg_color: 0xFFFFFF
-        #     bg_opa: TRANSP
-        #     border_width: 0
-        #     pad_all: 0
-        #     text_font: montserrat_10
-        #     widgets:
-        #       - meter: # Current rate meter
-        #           height: 100%
-        #           width: 100%
-        #           border_width: 0
-        #           pad_all: 0
-        #           bg_color: 0xDEDEDE
-        #           bg_opa: COVER
-        #           align: CENTER
-        #           scales:
-        #             - range_from: -20
-        #               range_to: 100
-        #               angle_range: 120
-        #               rotation: 120
-        #               ticks:
-        #                 width: 1
-        #                 count: 13
-        #                 length: 5
-        #                 color: 0x000000
-        #                 major:
-        #                   stride: 2
-        #                   width: 2
-        #                   length: 10
-        #                   color: 0x404040
-        #                   label_gap: 15
-        #               indicators:
-        #                 - line:
-        #                     id: val_needle_current_rate
-        #                     color: 0xBD0000
-        #                     width: 3
-        #                     r_mod: -5
-        #                     value: 0
-        #                 - line:
-        #                     id: val_needle_next_rate
-        #                     color: 0x00BD00
-        #                     width: 2
-        #                     r_mod: -5
-        #                     value: 0
+        - obj: # Container for the Energy gauge?
+            x: 10
+            y: 60
+            height: 200
+            width: 200
+            align: TOP_LEFT
+            bg_color: 0xFFFFFF
+            bg_opa: TRANSP
+            border_width: 0
+            pad_all: 0
+            text_font: montserrat_10
+            widgets:
+              - meter: # Current rate meter
+                  height: 100%
+                  width: 100%
+                  border_width: 0
+                  pad_all: 0
+                  bg_color: 0xDEDEDE
+                  bg_opa: COVER
+                  align: CENTER
+                  scales:
+                    - range_from: 0
+                      range_to: 6000
+                      angle_range: 300
+                      rotation: 120
+                      ticks:
+                        width: 1
+                        count: 61
+                        length: 5
+                        color: 0x000000
+                        major:
+                          stride: 10
+                          width: 2
+                          length: 10
+                          color: 0x404040
+                          label_gap: 15
+                      indicators:
+                        - line:
+                            id: val_needle_current_production
+                            color: 0xBD0000
+                            width: 3
+                            r_mod: -5
+                            value: 0
+                        - tick_style:
+                            start_value: 0
+                            end_value: 6000
+                            color_start: 0xbd0000
+                            color_end: 0x00bd00
+                            width: 1
 
-        #             - range_from: 10000
-        #               range_to: 0
-        #               angle_range: 120
-        #               rotation: 300
-        #               ticks:
-        #                 width: 1
-        #                 count: 11
-        #                 length: 5
-        #                 color: 0x000000
-        #                 major:
-        #                   stride: 2
-        #                   width: 2
-        #                   length: 10
-        #                   color: 0x404040
-        #                   label_gap: 15
-        #               indicators:
-        #                 - line:
-        #                     id: val_needle_current_demand
-        #                     color: 0xBD0000
-        #                     width: 3
-        #                     r_mod: -5
-        #                     value: 0
-        #                 - tick_style:
-        #                     start_value: 10000
-        #                     end_value: 0
-        #                     color_start: 0xbd0000
-        #                     color_end: 0x00bd00
-        #                     width: 1
+              - obj: # Cover the middle part of meter indicator line
+                  height: 110
+                  width: 110
+                  radius: 50
+                  align: CENTER
+                  border_width: 0
+                  bg_color: 0xFFFFFF
+                  pad_all: 0
 
-        #       - obj: # Cover the middle part of meter indicator line
-        #           height: 110
-        #           width: 110
-        #           radius: 55
-        #           align: CENTER
-        #           border_width: 0
-        #           bg_color: 0xFFFFFF
-        #           pad_all: 0
 
-        #       - label: # Current rate numeric indicator
-        #           id: val_text_current_rate
-        #           text_font: montserrat_18
-        #           align: CENTER
-        #           x: -22
-        #           y: -10
-        #           text: "0"
-        #       - label: # Current rate unit label
-        #           text_font: montserrat_10
-        #           align: CENTER
-        #           x: -22
-        #           y: 14
-        #           text: "p/kWh"
-
-        #       - label: # Current demand numeric indicator
-        #           id: val_text_current_demand
-        #           text_font: montserrat_18
-        #           align: CENTER
-        #           x: 22
-        #           y: -10
-        #           text: "0"
-        #       - label: # Current demand unit label
-        #           text_font: montserrat_10
-        #           align: CENTER
-        #           x: 22
-        #           y: 14
-        #           text: "W"
+              - label: # Current demand unit label
+                  text_font: montserrat_10
+                  align: CENTER
+                  x: 0
+                  y: -14
+                  text: "Generating"
+              - label: # Current demand numeric indicator
+                  id: val_text_current_production
+                  text_font: montserrat_18
+                  align: CENTER
+                  x: 0
+                  y: 0
+                  text: "0"
+              - label: # Current demand unit label
+                  text_font: montserrat_10
+                  align: CENTER
+                  x: 0
+                  y: 14
+                  text: "W"
 
     - id: second_page
       #skip: true
