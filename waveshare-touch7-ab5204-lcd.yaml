@@ -9,23 +9,6 @@ substitutions:
 packages:
   - !include common/package_connectivity.yaml
   - !include common/package_ha_base.yaml
-#   bambu_integration: !include
-#     file: common/bambu.yaml
-#   bambu_x1_carbon: !include
-#     file: common/bambu-device.yaml
-#     vars:
-#       device_name: x1_carbon
-#   bambu_a1_mini: !include
-#     file: common/bambu-device.yaml
-#     vars:
-#       device_name: a1_mini
-#   roomba: !include
-#     file: common/roomba.yaml
-#     vars:
-#       device_name: alfred
-#   weather: !include
-#     file: common/weather.yaml
-
 
 esphome:
   name: ${name}
@@ -44,7 +27,7 @@ esphome:
         - delay: 5s
         - lvgl.widget.hide: boot_screen
         - lvgl.page.show:
-            id: main_page
+            id: first_page
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -142,7 +125,7 @@ script:
             - logger.log: "LVGL resuming"
             - lvgl.resume:
             - lvgl.page.show:
-                id: main_page
+                id: first_page
             - lvgl.widget.redraw:
             - switch.turn_on: display_backlight
 
@@ -209,13 +192,13 @@ touchscreen:
       number: 1
       mode: OUTPUT
     transform:
-      mirror_x: true
-      mirror_y: true
+      mirror_x: false
+      mirror_y: false
       swap_xy: false
-    on_touch:
-      - lambda: |-
-            ESP_LOGI("Touch:touch : ", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
-                touch.x, touch.y, touch.x_raw, touch.y_raw);
+#    on_touch:
+#      - lambda: |-
+#            ESP_LOGI("Touch:touch : ", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+#                touch.x, touch.y, touch.x_raw, touch.y_raw);
     on_release:
       - script.execute: wake_from_sleep
 
@@ -225,7 +208,7 @@ display:
     id: my_display
     update_interval: never
     auto_clear_enabled: false
-    rotation: 180
+    # rotation: 180
     color_order: RGB
     pclk_frequency: 16MHZ
     dimensions:
@@ -275,6 +258,21 @@ display:
         - 21        #g7
 
 
+font:
+  - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_glyphs_medium
+    size: 25
+    glyphs: &mdi-glyphs
+      - "\U000F02DC" # home
+      - "\U000F0595" # weather-partly-cloudy / partlycloudy
+      - "\U000F0599" # weather-sunny / sunny
+      - "\U000F0D3E" # transmission-tower
+      - "\U000F070D" # robot-vacuum
+      - "\U000F056E" # view-dashboard
+      - "\U000F02D6" # Blank
+
+
+
 ###############################################################################
 # LVGL ########################################################################
 ###############################################################################
@@ -286,6 +284,7 @@ lvgl:
   #width: 800
   #height: 480
   #align: center
+  rotation: 180
   disp_bg_color: 0xffffff
 
   displays:
@@ -295,7 +294,7 @@ lvgl:
   on_idle:
     - timeout: 30s
       then:
-        - lvgl.page.show: main_page
+        - lvgl.page.show: first_page
     - timeout: 15min
       then:
         - script.execute: go_to_sleep
@@ -332,7 +331,8 @@ lvgl:
         border_color: 0x0077b3
         border_width: 1
         text_color: 0xFFFFFF
-        text_font: montserrat_20
+        #text_font: montserrat_20
+        text_font: mdi_glyphs_medium
         pressed:
           bg_color: 0x006699
           bg_grad_color: 0x00334d
@@ -455,38 +455,44 @@ lvgl:
           pad_all: 0
           outline_width: 0
           id: button_matrix
-          items:
-            styles: header_footer
+          text_font: mdi_glyphs_medium
+#          items:
+#            styles: header_footer
           rows:
             - buttons:
-              - id: main_page_btn
-                text: "\uF015"
-                on_press:
+              - id: first_page_btn
+                text: "\U000F02DC" # home
+                on_click:
                   then:
-                    lvgl.page.show: main_page
+                    - logger.log: "First button pressed"
+                    - lvgl.page.show: first_page
               - id: second_page_btn
-                text: "2"
-                on_press:
+                text: "\U000F0599" # weather-sunny
+                on_click:
                   then:
-                    lvgl.page.show: second_page
+                    - logger.log: "Second button pressed"
+                    - lvgl.page.show: second_page
               - id: third_page_btn
-                text: "3"
-                on_press:
+                text: "\U000F070D" # robot-vacuum
+                on_click:
                   then:
-                    lvgl.page.show: third_page
+                    - logger.log: "Third button pressed"
+                    - lvgl.page.show: third_page
               - id: fourth_page_btn
-                text: "4"
-                on_press:
+                text: "\U000F0D3E" # transmission-tower
+                on_click:
                   then:
-                    lvgl.page.show: fourth_page
+                    - logger.log: "Fourth button pressed"
+                    - lvgl.page.show: fourth_page
               - id: fifth_page_btn
-                text: "5"
-                on_press:
+                text: "\U000F056E" # view-dashboard
+                on_click:
                   then:
-                    lvgl.page.show: fifth_page
+                    - logger.log: "Fifth button pressed"
+                    - lvgl.page.show: fifth_page
 
   pages:
-    - id: main_page
+    - id: first_page
       widgets:
         - label:
             align: CENTER
