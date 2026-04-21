@@ -128,7 +128,19 @@ script:
                 id: first_page
             - lvgl.widget.redraw:
             - switch.turn_on: display_backlight
-
+      - if:
+          condition:
+            lambda: 'return id(enpower_122524000124_grid_status).state;'
+          then:
+            - logger.log: "HA Sensor is ON, performing action..."
+            - lvgl.led.update:
+                id: led_solar_grid_status
+                color: 0x00FF00
+          else:
+            - logger.log: "HA Sensor is OFF, performing alternative..."
+            - lvgl.led.update:
+                id: led_solar_grid_status
+                color: 0xFF0000
 
 ###############################################################################
 # HOME ASSISTANT BUTTONS ######################################################
@@ -169,7 +181,27 @@ switch:
 # SENSORS #####################################################################
 ###############################################################################
 
-#binary_sensor:
+binary_sensor:
+
+  - platform: homeassistant
+    entity_id: binary_sensor.enpower_122524000124_grid_status
+    id: enpower_122524000124_grid_status
+    on_state:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(enpower_122524000124_grid_status).state;'
+            then:
+              - logger.log: "HA Sensor is ON, performing action..."
+              - lvgl.led.update:
+                  id: led_solar_grid_status
+                  color: 0x00FF00
+            else:
+              - logger.log: "HA Sensor is OFF, performing alternative..."
+              - lvgl.led.update:
+                  id: led_solar_grid_status
+                  color: 0xFF0000
+
 
 #text_sensor:
 
@@ -583,7 +615,7 @@ lvgl:
                   grid_cell_y_align: CENTER
                   widgets:
                     - led:
-                        id: led_id
+                        id: led_solar_grid_status
                         align: CENTER
                         color: 0xFF0000
                         brightness: 100%
