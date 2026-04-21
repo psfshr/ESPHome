@@ -260,58 +260,59 @@ touchscreen:
 
 # Define display
 display:
-  - platform: rpi_dpi_rgb
+  - platform: mipi_rgb
     id: my_display
+    model: ESP32-S3-TOUCH-LCD-7-800X480
     update_interval: never
     auto_clear_enabled: false
     # rotation: 180
-    color_order: RGB
-    pclk_frequency: 16MHZ
-    dimensions:
-      width: 800
-      height: 480
-    de_pin:
-      number: 5
-    hsync_pin:
-      number: 46
-      ignore_strapping_warning: true
-    vsync_pin:
-      number: 3
-      ignore_strapping_warning: true
-    pclk_pin: 7
-    pclk_inverted: true
-    reset_pin:
-      ch422g: ch422g_hub
-      number: 3
-#    enable_pin:
-#      ch422g: ch422g_hub
-#      number: 2  
-    hsync_back_porch: 8
-    hsync_front_porch: 8
-    hsync_pulse_width: 4
-    vsync_back_porch: 16
-    vsync_front_porch: 16
-    vsync_pulse_width: 4
-    data_pins:
-      red:
-        - 1         #r3
-        - 2         #r4
-        - 42        #r5
-        - 41        #r6
-        - 40        #r7
-      blue:
-        - 14        #b3
-        - 38        #b4
-        - 18        #b5
-        - 17        #b6
-        - 10        #b7
-      green:
-        - 39        #g2
-        - 0         #g3
-        - 45        #g4
-        - 48        #g5
-        - 47        #g6
-        - 21        #g7
+#     color_order: RGB
+#     pclk_frequency: 16MHZ
+#     dimensions:
+#       width: 800
+#       height: 480
+#     de_pin:
+#       number: 5
+#     hsync_pin:
+#       number: 46
+#       ignore_strapping_warning: true
+#     vsync_pin:
+#       number: 3
+#       ignore_strapping_warning: true
+#     pclk_pin: 7
+#     pclk_inverted: true
+#     reset_pin:
+#       ch422g: ch422g_hub
+#       number: 3
+# #    enable_pin:
+# #      ch422g: ch422g_hub
+# #      number: 2  
+#     hsync_back_porch: 8
+#     hsync_front_porch: 8
+#     hsync_pulse_width: 4
+#     vsync_back_porch: 16
+#     vsync_front_porch: 16
+#     vsync_pulse_width: 4
+#     data_pins:
+#       red:
+#         - 1         #r3
+#         - 2         #r4
+#         - 42        #r5
+#         - 41        #r6
+#         - 40        #r7
+#       blue:
+#         - 14        #b3
+#         - 38        #b4
+#         - 18        #b5
+#         - 17        #b6
+#         - 10        #b7
+#       green:
+#         - 39        #g2
+#         - 0         #g3
+#         - 45        #g4
+#         - 48        #g5
+#         - 47        #g6
+#         - 21        #g7
 
 
 ###############################################################################
@@ -326,7 +327,6 @@ lvgl:
   #height: 480
   #align: center
   rotation: 180
-  disp_bg_color: 0xffffff
 
   displays:
     - my_display
@@ -431,6 +431,21 @@ lvgl:
       height: 50
       text_font: montserrat_20
 
+  bottom_layer:
+    widgets:
+      - obj:
+          id: base_layer
+          x: 0
+          y: 0
+          height: 100%
+          width: 100%
+          align: CENTER
+          bg_color: 0xffffff
+          bg_opa: COVER
+          radius: 0
+          pad_all: 0
+          border_width: 0
+
   top_layer:
     widgets:
       - obj:
@@ -534,10 +549,83 @@ lvgl:
 
   pages:
     - id: first_page
+      #skip: true
+      # Example grid layout
       widgets:
-        - label:
+        - obj:
+            x: 0
+            y: 0
+            width: 800
+            height: 380
             align: CENTER
-            text: 'First Page'
+            bg_color: 0xA0A0A0
+            #bg_opa: TRANSP
+            border_width: 1
+            pad_all: 0
+            layout:
+              type: grid
+              grid_row_align: end
+              grid_rows: [ fr(1), fr(1)]
+              grid_columns: [ fr(1), fr(1), fr(1), fr(1) ]
+            widgets:
+              - container:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 0
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  widgets: 
+                    - label:
+                        text: "R0 - C0"
+              - container:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 1
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  widgets:
+                    - led:
+                        id: led_id
+                        align: CENTER
+                        color: 0xFF0000
+                        brightness: 100%
+              - label:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  text: "R0 - C2"
+              - label:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 3
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  text: "R0 - C3"
+              - label:
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 0
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  text: "R1 - C0"
+              - label:
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 1
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  text: "R1 - C1"
+              - label:
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  text: "R1 - C2"
+              - label:
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 3
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  text: "R1 - C3"
+
+    - id: second_page
+      widgets:
         - obj: # Container for the Energy gauge?
             x: 10
             y: 60
@@ -579,7 +667,7 @@ lvgl:
                             id: val_needle_current_production
                             color: 0xBD0000
                             width: 3
-                            r_mod: -5
+                            length: -5
                             value: 0
                         - tick_style:
                             start_value: 0
@@ -618,12 +706,8 @@ lvgl:
                   y: 14
                   text: "W"
 
-    - id: second_page
-      #skip: true
-      widgets:
-        - label:
-            align: CENTER
-            text: 'Second Page'
+
+
 
     - id: third_page
       #skip: true
