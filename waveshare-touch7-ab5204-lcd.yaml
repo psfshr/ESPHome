@@ -232,10 +232,40 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: header_lbl_greeting
-            text:
-              format: "Good %s!"
-              args: [ 'x' ]
+            id: lbl_header_greeting
+            text: !lambda return "Good " + id(timeofday_greeting).state;
+
+
+  # Power Sensors
+  - platform: homeassistant
+    entity_id: sensor.envoy_current_power_production_state
+    id: envoy_current_power_production_state
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_solar_state
+            text: !lambda return id(envoy_current_power_production_state).state;
+
+  - platform: homeassistant
+    entity_id: sensor.envoy_battery_combined_state
+    id: envoy_battery_combined_state
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_battery_state
+            text: !lambda return id(envoy_battery_combined_state).state;
+
+  - platform: homeassistant
+    entity_id: sensor.envoy_net_power_import_export_state
+    id: envoy_net_power_import_export_state
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_grid_state
+            text: !lambda return id(envoy_net_power_import_export_state).state;
+
+
+
 
 
 sensor:
@@ -276,7 +306,8 @@ sensor:
   - platform: homeassistant
     entity_id: sensor.envoy_net_power_import
     id: envoy_net_power_import
-
+    filters:
+      - multiply: 1000
 
 
 ###############################################################################
@@ -521,7 +552,7 @@ lvgl:
           widgets:
             - label:
                 text: "Hello"
-                id: header_lbl_greeting
+                id: lbl_header_greeting
                 flex_grow: 1
                 align: left_mid
             - label:
@@ -596,7 +627,9 @@ lvgl:
                   styles: style_obj_in_grid
                   widgets: 
                     - label:
+                        id: lbl_solar_state
                         text: "R0 - C0"
+                        text_align: CENTER
                         align: CENTER
               - obj:
                   grid_cell_row_pos: 0
@@ -604,7 +637,9 @@ lvgl:
                   styles: style_obj_in_grid
                   widgets: 
                     - label:
+                        id: lbl_battery_state
                         text: "R0 - C1"
+                        text_align: CENTER
                         align: CENTER
               - obj:
                   grid_cell_row_pos: 0
@@ -612,7 +647,9 @@ lvgl:
                   styles: style_obj_in_grid
                   widgets: 
                     - label:
+                        id: lbl_grid_state
                         text: "R0 - C2"
+                        text_align: CENTER
                         align: CENTER
               - obj:
                   grid_cell_row_pos: 0
@@ -621,6 +658,7 @@ lvgl:
                   widgets: 
                     - label:
                         text: "R0 - C3"
+                        text_align: CENTER
                         align: CENTER
               - obj:
                   grid_cell_row_pos: 1
@@ -629,6 +667,7 @@ lvgl:
                   widgets: 
                     - label:
                         text: "R1 - C0"
+                        text_align: CENTER
                         align: CENTER
               - obj:
                   grid_cell_row_pos: 1
@@ -637,6 +676,7 @@ lvgl:
                   widgets: 
                     - label:
                         text: "R1 - C1"
+                        text_align: CENTER
                         align: CENTER
               - obj:
                   grid_cell_row_pos: 1
@@ -645,6 +685,7 @@ lvgl:
                   widgets: 
                     - label:
                         text: "R1 - C2"
+                        text_align: CENTER
                         align: CENTER
               - obj:
                   grid_cell_row_pos: 1
@@ -655,13 +696,13 @@ lvgl:
                         text: "Conn\nStatus"
                         align: CENTER
                         text_align: CENTER
-                        x: -60
-                        y: -60
+                        x: -50
+                        y: -50
                     - led:
                         id: led_solar_connection_status
                         align: CENTER
-                        x: -60
-                        y: -10
+                        x: -50
+                        y: 0
                         color: 0xFF0000
                         brightness: 100%
 
@@ -669,13 +710,13 @@ lvgl:
                         text: "Grid\nStatus"
                         align: CENTER
                         text_align: CENTER
-                        x: 60
-                        y: -60
+                        x: 50
+                        y: -50
                     - led:
                         id: led_solar_grid_status
                         align: CENTER
-                        x: 60
-                        y: -10
+                        x: 50
+                        y: 0
                         color: 0xFF0000
                         brightness: 100%
 
