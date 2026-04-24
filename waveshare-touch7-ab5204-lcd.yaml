@@ -265,9 +265,6 @@ text_sensor:
             text: !lambda return id(envoy_net_power_import_export_state).state;
 
 
-
-
-
 sensor:
 
   - platform: homeassistant
@@ -277,38 +274,87 @@ sensor:
       - multiply: 1000
     on_value:
       then:
-        - logger.log:
-            format: "Production : %.1f"
-            args: [ 'x' ]
-        - lvgl.indicator.update:
-            id: val_needle_current_production
-            value: !lambda return x;
         - lvgl.label.update:
-            id: val_text_current_production
+            id: lbl_solar_power
             text:
-              format: "%.0f"
-              args: [ 'x' ]
+              format: "%.0f W"
+              args: [ 'x' ]      
+        - lvgl.bar.update:
+            id: bar_solar_power
+            value: !lambda return x;
+            indicator:
+              bg_color: yellow
 
   - platform: homeassistant
     entity_id: sensor.envoy_battery_combined_power
     id: envoy_battery_combined_power
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_battery_power
+            text:
+              format: "%.0f W"
+              args: [ 'x' ]
+        - lvgl.bar.update:
+            id: bar_battery_power
+            value: !lambda return x;
+            indicator:
+              bg_color: blue
 
   - platform: homeassistant
     entity_id: sensor.encharge_492447007140_battery
     id: encharge_492447007140_battery
-
-  - platform: homeassistant
-    entity_id: sensor.envoy_net_power_export
-    id: envoy_net_power_export
-    filters:
-      - multiply: 1000
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_battery_charge
+            text:
+              format: "%.0f %%"
+              args: [ 'x' ]  
 
   - platform: homeassistant
     entity_id: sensor.envoy_net_power_import
     id: envoy_net_power_import
     filters:
       - multiply: 1000
+    on_value:
+      then:
+        - if:
+            condition:
+              - lambda: 'return x > 0;'
+            then:
+              - lvgl.label.update:
+                  id: lbl_grid_power
+                  text:
+                    format: "%.0f W"
+                    args: [ 'x' ]  
+              - lvgl.bar.update:
+                  id: bar_grid_power
+                  value: !lambda return x;
+                  indicator:
+                    bg_color: red
 
+  - platform: homeassistant
+    entity_id: sensor.envoy_net_power_export
+    id: envoy_net_power_export
+    filters:
+      - multiply: 1000
+    on_value:
+      then:
+        - if:
+            condition:
+              - lambda: 'return x > 0;'
+            then:
+              - lvgl.label.update:
+                  id: lbl_grid_power
+                  text:
+                    format: "%.0f W"
+                    args: [ 'x' ]
+              - lvgl.bar.update:
+                  id: bar_grid_power
+                  value: !lambda return x;
+                  indicator:
+                    bg_color: green
 
 ###############################################################################
 # FONTS & TEXT ################################################################
@@ -627,6 +673,7 @@ lvgl:
               pad_row: 5
               pad_column: 5
             widgets:
+
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 0
@@ -647,6 +694,23 @@ lvgl:
                         align: CENTER
                         x: 0
                         y: 0
+                    - label:
+                        id: lbl_solar_power
+                        text: "R0 - C0"
+                        text_align: CENTER
+                        align: CENTER
+                        x: 0
+                        y: 30
+                    - bar:
+                        align: CENTER
+                        id: bar_solar_power
+                        value: 75
+                        min_value: 0
+                        max_value: 6000
+                        x: 0
+                        y: 60
+                        width: 80%
+
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 1
@@ -667,6 +731,23 @@ lvgl:
                         align: CENTER
                         x: 0
                         y: 0
+                    - label:
+                        id: lbl_battery_power
+                        text: "R0 - C0"
+                        text_align: CENTER
+                        align: CENTER
+                        x: 0
+                        y: 30
+                    - bar:
+                        align: CENTER
+                        id: bar_battery_power
+                        value: 75
+                        min_value: 0
+                        max_value: 6000
+                        x: 0
+                        y: 60
+                        width: 80%
+
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 2
@@ -687,6 +768,23 @@ lvgl:
                         align: CENTER
                         x: 0
                         y: 0
+                    - label:
+                        id: lbl_grid_power
+                        text: "R0 - C0"
+                        text_align: CENTER
+                        align: CENTER
+                        x: 0
+                        y: 30
+                    - bar:
+                        align: CENTER
+                        id: bar_grid_power
+                        value: 75
+                        min_value: 0
+                        max_value: 6000
+                        x: 0
+                        y: 60
+                        width: 80%
+
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 3
@@ -696,8 +794,13 @@ lvgl:
                         text: "R0 - C3"
                         text_align: CENTER
                         align: CENTER
+                    - label:
+                        id: lbl_battery_charge
+                        text: "R0 - C0"
+                        text_align: CENTER
+                        align: CENTER
                         x: 0
-                        y: -25
+                        y: 50  
               - obj:
                   grid_cell_row_pos: 1
                   grid_cell_column_pos: 0
@@ -731,15 +834,15 @@ lvgl:
                   styles: style_obj_in_grid
                   widgets:
                     - label:
-                        text: "Conn\nStatus"
+                        text: "Gateway\nStatus"
                         align: CENTER
                         text_align: CENTER
-                        x: -50
+                        x: -40
                         y: -50
                     - led:
                         id: led_solar_connection_status
                         align: CENTER
-                        x: -50
+                        x: -40
                         y: 0
                         color: 0xFF0000
                         brightness: 100%
@@ -748,12 +851,12 @@ lvgl:
                         text: "Grid\nStatus"
                         align: CENTER
                         text_align: CENTER
-                        x: 50
+                        x: 40
                         y: -50
                     - led:
                         id: led_solar_grid_status
                         align: CENTER
-                        x: 50
+                        x: 40
                         y: 0
                         color: 0xFF0000
                         brightness: 100%
@@ -771,75 +874,6 @@ lvgl:
             border_width: 0
             pad_all: 0
             text_font: montserrat_10
-            widgets:
-              - meter: # Current rate meter
-                  height: 100%
-                  width: 100%
-                  border_width: 0
-                  pad_all: 0
-                  bg_color: 0xDEDEDE
-                  bg_opa: COVER
-                  align: CENTER
-                  scales:
-                    - range_from: 0
-                      range_to: 6000
-                      angle_range: 300
-                      rotation: 120
-                      ticks:
-                        width: 1
-                        count: 61
-                        length: 5
-                        color: 0x000000
-                        major:
-                          stride: 10
-                          width: 2
-                          length: 10
-                          color: 0x404040
-                          label_gap: 15
-                      indicators:
-                        - line:
-                            id: val_needle_current_production
-                            color: 0xBD0000
-                            width: 3
-                            length: -5
-                            value: 0
-                        - tick_style:
-                            start_value: 0
-                            end_value: 6000
-                            color_start: 0xbd0000
-                            color_end: 0x00bd00
-                            width: 1
-
-              - obj: # Cover the middle part of meter indicator line
-                  height: 110
-                  width: 110
-                  radius: 50
-                  align: CENTER
-                  border_width: 0
-                  bg_color: 0xFFFFFF
-                  pad_all: 0
-
-
-              - label: # Current demand unit label
-                  text_font: montserrat_10
-                  align: CENTER
-                  x: 0
-                  y: -14
-                  text: "Generating"
-              - label: # Current demand numeric indicator
-                  id: val_text_current_production
-                  text_font: montserrat_18
-                  align: CENTER
-                  x: 0
-                  y: 0
-                  text: "0"
-              - label: # Current demand unit label
-                  text_font: montserrat_10
-                  align: CENTER
-                  x: 0
-                  y: 14
-                  text: "W"
-
 
 
 
