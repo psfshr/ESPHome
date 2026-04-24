@@ -322,11 +322,17 @@ font:
       - "\U000F02DC" # home
       - "\U000F0595" # weather-partly-cloudy / partlycloudy
       - "\U000F0599" # weather-sunny / sunny
+      - "\U000F1A73" # solar-power-variant
+      - "\U000F1901" # home-battery
       - "\U000F0D3E" # transmission-tower
       - "\U000F070D" # robot-vacuum
       - "\U000F056E" # view-dashboard
       - "\U000F02D6" # Blank
 
+  - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_glyphs_large
+    size: 50
+    glyphs: *mdi-glyphs
 
 ###############################################################################
 # DISPLAY #####################################################################
@@ -625,32 +631,62 @@ lvgl:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 0
                   styles: style_obj_in_grid
-                  widgets: 
+                  widgets:
+                    - label:
+                        text: "\U000F1A73" # solar-power-variant
+                        text_font: mdi_glyphs_large
+                        text_align: CENTER
+                        text_color: green
+                        align: CENTER
+                        x: 0
+                        y: -50
                     - label:
                         id: lbl_solar_state
                         text: "R0 - C0"
                         text_align: CENTER
                         align: CENTER
+                        x: 0
+                        y: 0
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 1
                   styles: style_obj_in_grid
-                  widgets: 
+                  widgets:
+                    - label:
+                        text: "\U000F1901" # home-battery
+                        text_font: mdi_glyphs_large
+                        text_align: CENTER
+                        text_color: blue
+                        align: CENTER
+                        x: 0
+                        y: -50
                     - label:
                         id: lbl_battery_state
                         text: "R0 - C1"
                         text_align: CENTER
                         align: CENTER
+                        x: 0
+                        y: 0
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 2
                   styles: style_obj_in_grid
-                  widgets: 
+                  widgets:
+                    - label:
+                        text: "\U000F0D3E" # transmission-tower
+                        text_font: mdi_glyphs_large
+                        text_align: CENTER
+                        text_color: red
+                        align: CENTER
+                        x: 0
+                        y: -50
                     - label:
                         id: lbl_grid_state
                         text: "R0 - C2"
                         text_align: CENTER
                         align: CENTER
+                        x: 0
+                        y: 0
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 3
@@ -660,6 +696,8 @@ lvgl:
                         text: "R0 - C3"
                         text_align: CENTER
                         align: CENTER
+                        x: 0
+                        y: -25
               - obj:
                   grid_cell_row_pos: 1
                   grid_cell_column_pos: 0
