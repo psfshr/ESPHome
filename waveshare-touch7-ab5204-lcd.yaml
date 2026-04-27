@@ -1,6 +1,6 @@
-###############################################################################
-# BASE DEVICE CONFIG ##########################################################
-###############################################################################
+##############################################################################################################################################################
+# BASE DEVICE CONFIG #########################################################################################################################################
+##############################################################################################################################################################
 
 substitutions:
   name: waveshare-touch7-ab5204
@@ -28,6 +28,9 @@ esphome:
         - lvgl.widget.hide: boot_screen
         - lvgl.page.show:
             id: first_page
+
+  includes:
+    - includes/weather_icons.h
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -87,9 +90,9 @@ logger:
 #  level: VERBOSE
 
 
-###############################################################################
-# INPUTS & OUTPUTS ############################################################
-###############################################################################
+##############################################################################################################################################################
+# INPUTS & OUTPUTS ###########################################################################################################################################
+##############################################################################################################################################################
 
 i2c:
   sda: GPIO08
@@ -100,9 +103,9 @@ i2c:
 ch422g:
   - id: ch422g_hub
 
-###############################################################################
-# VARIABLES & SCRIPTS #########################################################
-###############################################################################
+##############################################################################################################################################################
+# VARIABLES & SCRIPTS ########################################################################################################################################
+##############################################################################################################################################################
 
 script:
   - id: go_to_sleep
@@ -142,9 +145,9 @@ script:
                 id: led_solar_grid_status
                 color: 0xFF0000
 
-###############################################################################
-# HOME ASSISTANT BUTTONS ######################################################
-###############################################################################
+##############################################################################################################################################################
+# HOME ASSISTANT BUTTONS #####################################################################################################################################
+##############################################################################################################################################################
 
 button:
   - platform: template
@@ -177,9 +180,13 @@ switch:
     restore_mode: ALWAYS_ON
 
 
-###############################################################################
-# SENSORS #####################################################################
-###############################################################################
+##############################################################################################################################################################
+# SENSORS ####################################################################################################################################################
+##############################################################################################################################################################
+
+##############################################################################
+# BINARY SENSORS #############################################################
+##############################################################################
 
 binary_sensor:
 
@@ -224,6 +231,10 @@ binary_sensor:
                   color: 0xFF0000
 
 
+##############################################################################
+# TEXT SENSORS ###############################################################
+##############################################################################
+
 text_sensor:
 
   - platform: homeassistant
@@ -235,6 +246,27 @@ text_sensor:
             id: lbl_header_greeting
             text: !lambda return "Good " + id(timeofday_greeting).state;
 
+  # Weather Sensors - Now
+  - platform: homeassistant
+    entity_id: sensor.weather_now
+    id: weather_now
+
+  # Weather Sensors - Daily
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: condition0
+    id: daily_forecast_condition0
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_icon_large
+            text: !lambda return weather_icon(x);
+            text_color: !lambda return weather_color(x);
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: condition1
+    id: daily_forecast_condition1
 
   # Power Sensors
   - platform: homeassistant
@@ -265,7 +297,69 @@ text_sensor:
             text: !lambda return id(envoy_net_power_import_export_state).state;
 
 
+##############################################################################
+# GENERAL SENSORS ############################################################
+##############################################################################
+
 sensor:
+
+  # Weather Sensors - Now
+  - platform: homeassistant
+    entity_id: sensor.front_garden_climate_temperature
+    id: temperature_now
+
+  - platform: homeassistant
+    entity_id: sensor.front_garden_climate_humidity
+    id: humidity_now
+
+  - platform: homeassistant
+    entity_id: sensor.front_garden_climate_pressure
+    id: pressure_now
+
+  # Weather Sensors - Daily
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: temperature0
+    id: daily_forecast_temperature0
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: templow0
+    id: daily_forecast_templow0
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: wind_speed0
+    id: wind_speed0
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: wind_bearing0
+    id: wind_bearing0
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: temperature1
+    id: daily_forecast_temperature1
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: templow1
+    id: daily_forecast_templow1
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: wind_speed1
+    id: wind_speed1
+
+  - platform: homeassistant
+    entity_id: sensor.weather_forecast_daily
+    attribute: wind_bearing1
+    id: wind_bearing1
+
+
+
+
 
   - platform: homeassistant
     entity_id: sensor.envoy_122523000047_current_power_production
@@ -346,35 +440,92 @@ sensor:
 
 
 
-###############################################################################
-# FONTS & TEXT ################################################################
-###############################################################################
+##############################################################################################################################################################
+# FONTS & TEXT ###############################################################################################################################################
+##############################################################################################################################################################
 
 font:
   - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
-    id: mdi_glyphs_medium
+    id: mdi_general_glyphs_medium
     size: 25
-    glyphs: &mdi-glyphs
+    glyphs: &mdi_general_glyphs
       - "\U000F02DC" # home
-      - "\U000F0595" # weather-partly-cloudy / partlycloudy
-      - "\U000F0599" # weather-sunny / sunny
       - "\U000F1A73" # solar-power-variant
       - "\U000F1901" # home-battery
       - "\U000F0D3E" # transmission-tower
       - "\U000F1903" # home-lightning-bolt
       - "\U000F070D" # robot-vacuum
       - "\U000F056E" # view-dashboard
+
+      - "\U000F0F61" # moon-first-quarter
+      - "\U000F0F62" # moon-full
+      - "\U000F0F63" # moon-last-quarter
+      - "\U000F0F64" # moon-new
+      - "\U000F0F65" # moon-waning-crescent
+      - "\U000F0F66" # moon-waning-gibbous
+      - "\U000F0F67" # moon-waxing-crescent
+      - "\U000F0F68" # moon-waxing-gibbous
+
+      - "\U000F0535" # trending-up
+      - "\U000F0533" # trending-down
+      - "\U000F0534" # trending-neutral
+      - "\U000F0143" # chevron-up
+      - "\U000F013F" # chevron-double-up
+      - "\U000F0DBC" # chevron-triple-up
+      - "\U000F0140" # chevron-down
+      - "\U000F013C" # chevron-double-down
+      - "\U000F0DB9" # chevron-triple-down
+      - "\U000F018C" # compass-outline
+      - "\U000F1885" # flower-pollen
+
+      - "\U000F05CE" # clock-alert-outline
       - "\U000F02D6" # Blank
 
 
   - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
-    id: mdi_glyphs_large
+    id: mdi_general_glyphs_large
     size: 50
-    glyphs: *mdi-glyphs
+    glyphs: *mdi_general_glyphs
 
-###############################################################################
-# DISPLAY #####################################################################
-###############################################################################
+
+  - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_weather_glyphs_medium
+    size: 25
+    glyphs: &mdi_weather_glyphs
+      - "\U000F0594" # weather-night / clear-night
+      - "\U000F0590" # weather-cloudy / cloudy
+      - "\U000F0591" # weather-fog / fog
+      - "\U000F0592" # weather-hail / hail
+      - "\U000F0593" # weather-lightning / lightning
+      - "\U000F067E" # weather-lightning-rainy / lightning-rainy
+      - "\U000F0595" # weather-partly-cloudy / partlycloudy
+      - "\U000F0596" # weather-pouring / pouring
+      - "\U000F0597" # weather-rainy / rainy
+      - "\U000F0598" # weather-snowy / snowy
+      - "\U000F067F" # weather-snowy-rainy / snowy-rainy
+      - "\U000F0599" # weather-sunny / sunny
+      - "\U000F059D" # weather-windy / windy
+      - "\U000F059E" # weather-windy-variant / windy-variant
+      - "\U000F1C78" # weather-hurricane-outline / exceptional
+      - "\U000F0F31" # weather-night-partly-cloudy / partlycloudy-night
+
+      - "\U000F02D6" # Blank
+
+  - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_weather_glyphs_large
+    size: 50
+    glyphs: *mdi_weather_glyphs
+
+  - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_weather_glyphs_extra_large
+    size: 150
+    glyphs: *mdi_weather_glyphs
+
+
+
+##############################################################################################################################################################
+# DISPLAY ####################################################################################################################################################
+##############################################################################################################################################################
 
 touchscreen:
   - platform: gt911
@@ -404,9 +555,9 @@ display:
     auto_clear_enabled: false
 
 
-###############################################################################
-# LVGL ########################################################################
-###############################################################################
+##############################################################################################################################################################
+# LVGL #######################################################################################################################################################
+##############################################################################################################################################################
 
 lvgl:
   #log_level: none #INFO
@@ -462,7 +613,7 @@ lvgl:
         border_width: 1
         text_color: 0xFFFFFF
         #text_font: montserrat_20
-        text_font: mdi_glyphs_medium
+        text_font: mdi_general_glyphs_medium
         pressed:
           bg_color: 0x006699
           bg_grad_color: 0x00334d
@@ -614,7 +765,7 @@ lvgl:
           pad_all: 0
           outline_width: 0
           id: button_matrix
-          text_font: mdi_glyphs_medium
+          text_font: mdi_general_glyphs_medium
 #          items:
 #            styles: style_page_header
           rows:
@@ -650,6 +801,11 @@ lvgl:
                     - logger.log: "Fifth button pressed"
                     - lvgl.page.show: fifth_page
 
+
+##############################################################################
+# LGVL PAGES #################################################################
+##############################################################################
+
   pages:
 
     - id: first_page # Overview
@@ -674,9 +830,30 @@ lvgl:
                   styles: style_obj_in_grid
                   widgets:
                     - label:
-                        text: "R0 - C0"
+                        text: "TODAY"
+                        text_font: montserrat_48
                         text_align: CENTER
-                        align: CENTER
+                        align: TOP_MID
+                    - label:
+                        id: lbl_weather_icon_large
+                        text: "x"
+                        text_font: mdi_weather_glyphs_extra_large
+                        text_align: CENTER
+                        text_color: black
+                        align: LEFT_MID
+                        x: 0
+                        y: -30
+
+
+        # it.printf(60, 145, id(mdi_glyphs_med), COLOR_ON, TextAlign::CENTER, "%s", font_icon_map[id(daily_forecast_condition0).state.c_str()].c_str());
+        # it.printf(155, 145, id(text_med), COLOR_ON, TextAlign::CENTER, "%2.0f - %2.0f°C", id(daily_forecast_templow0).state, id(daily_forecast_temperature0).state);
+
+        # it.printf(50, 190, id(mdi_glyphs_med), COLOR_ON, TextAlign::CENTER, "%s", font_icon_map["windy"].c_str());
+        # it.printf(100, 190, id(text_med), COLOR_ON, TextAlign::CENTER, "%2.0f", id(wind_speed0).state);
+        # it.printf(150, 190, id(mdi_glyphs_med), COLOR_ON, TextAlign::CENTER, "%s", font_icon_map["compass-outline"].c_str());
+        # it.printf(200, 190, id(text_med), COLOR_ON, TextAlign::CENTER, "%3.0f°", id(wind_bearing0).state);
+
+
               - obj:
                   grid_cell_row_pos: 0
                   grid_cell_column_pos: 2
@@ -762,7 +939,7 @@ lvgl:
                   widgets:
                     - label:
                         text: "\U000F1A73" # solar-power-variant
-                        text_font: mdi_glyphs_large
+                        text_font: mdi_general_glyphs_large
                         text_align: CENTER
                         text_color: green
                         align: CENTER
@@ -801,7 +978,7 @@ lvgl:
                   widgets:
                     - label:
                         text: "\U000F1901" # home-battery
-                        text_font: mdi_glyphs_large
+                        text_font: mdi_general_glyphs_large
                         text_align: CENTER
                         text_color: blue
                         align: CENTER
@@ -847,7 +1024,7 @@ lvgl:
                   widgets:
                     - label:
                         text: "\U000F0D3E" # transmission-tower
-                        text_font: mdi_glyphs_large
+                        text_font: mdi_general_glyphs_large
                         text_align: CENTER
                         text_color: red
                         align: CENTER
@@ -886,7 +1063,7 @@ lvgl:
                   widgets: 
                     - label:
                         text: "\U000F1903" # home-lightning-bolt
-                        text_font: mdi_glyphs_large
+                        text_font: mdi_general_glyphs_large
                         text_align: CENTER
                         text_color: black
                         align: CENTER
