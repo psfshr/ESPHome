@@ -272,6 +272,7 @@ sensor:
     id: envoy_122523000047_current_power_production
     filters:
       - multiply: 1000
+      - lambda: return abs(x);
     on_value:
       then:
         - lvgl.label.update:
@@ -282,8 +283,6 @@ sensor:
         - lvgl.bar.update:
             id: bar_solar_power
             value: !lambda return x;
-            indicator:
-              bg_color: yellow
 
   - platform: homeassistant
     entity_id: sensor.envoy_battery_combined_power
@@ -298,8 +297,6 @@ sensor:
         - lvgl.bar.update:
             id: bar_battery_power
             value: !lambda return x;
-            indicator:
-              bg_color: blue
 
   - platform: homeassistant
     entity_id: sensor.encharge_492447007140_battery
@@ -313,48 +310,41 @@ sensor:
               args: [ 'x' ]  
 
   - platform: homeassistant
-    entity_id: sensor.envoy_net_power_import
-    id: envoy_net_power_import
+    entity_id: sensor.envoy_122523000047_current_net_power_consumption
+    id: envoy_122523000047_current_net_power_consumption
     filters:
       - multiply: 1000
+      - lambda: return abs(x);
     on_value:
       then:
-        - if:
-            condition:
-              - lambda: 'return x > 0;'
-            then:
-              - lvgl.label.update:
-                  id: lbl_grid_power
-                  text:
-                    format: "%.0f W"
-                    args: [ 'x' ]  
-              - lvgl.bar.update:
-                  id: bar_grid_power
-                  value: !lambda return x;
-                  indicator:
-                    bg_color: red
+        - lvgl.label.update:
+            id: lbl_grid_power
+            text:
+              format: "%.0f W"
+              args: [ 'x' ]
+        - lvgl.bar.update:
+            id: bar_grid_power
+            value: !lambda return x;
 
   - platform: homeassistant
-    entity_id: sensor.envoy_net_power_export
-    id: envoy_net_power_export
+    entity_id: sensor.envoy_calculated_consumption
+    id: envoy_calculated_consumption
     filters:
       - multiply: 1000
+      - lambda: return abs(x);
     on_value:
       then:
-        - if:
-            condition:
-              - lambda: 'return x > 0;'
-            then:
-              - lvgl.label.update:
-                  id: lbl_grid_power
-                  text:
-                    format: "%.0f W"
-                    args: [ 'x' ]
-              - lvgl.bar.update:
-                  id: bar_grid_power
-                  value: !lambda return x;
-                  indicator:
-                    bg_color: green
+        - lvgl.label.update:
+            id: lbl_house_power
+            text:
+              format: "%.0f W"
+              args: [ 'x' ]
+        - lvgl.bar.update:
+            id: bar_house_power
+            value: !lambda return x;
+
+
+
 
 ###############################################################################
 # FONTS & TEXT ################################################################
@@ -371,9 +361,11 @@ font:
       - "\U000F1A73" # solar-power-variant
       - "\U000F1901" # home-battery
       - "\U000F0D3E" # transmission-tower
+      - "\U000F1903" # home-lightning-bolt
       - "\U000F070D" # robot-vacuum
       - "\U000F056E" # view-dashboard
       - "\U000F02D6" # Blank
+
 
   - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
     id: mdi_glyphs_large
@@ -646,7 +638,7 @@ lvgl:
                     - logger.log: "Third button pressed"
                     - lvgl.page.show: third_page
               - id: fourth_page_btn
-                text: "\U000F0D3E" # transmission-tower
+                text: "\U000F1903" # home-lightning-bolt
                 on_click:
                   then:
                     - logger.log: "Fourth button pressed"
@@ -659,7 +651,96 @@ lvgl:
                     - lvgl.page.show: fifth_page
 
   pages:
-    - id: first_page
+
+    - id: first_page # Overview
+      #skip: true
+      # Example grid layout
+      widgets:
+        - obj:
+            styles: style_page_grid
+            layout:
+              type: grid
+              grid_row_align: end
+              grid_rows: [ fr(1), fr(1)]
+              grid_columns: [ fr(1), fr(1), fr(1), fr(1) ]
+              pad_row: 5
+              pad_column: 5
+            widgets:
+              - obj:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  styles: style_obj_in_grid
+                  widgets:
+                    - label:
+                        text: "R0 - C0"
+                        text_align: CENTER
+                        align: CENTER
+              - obj:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 2
+                  styles: style_obj_in_grid
+                  widgets:
+                    - label:
+                        text: "R0 - C2"
+                        text_align: CENTER
+                        align: CENTER
+              - obj:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 3
+                  styles: style_obj_in_grid
+                  widgets: 
+                    - label:
+                        text: "R0 - C3"
+                        text_align: CENTER
+                        align: CENTER
+
+              - obj:
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 2
+                  styles: style_obj_in_grid
+                  widgets: 
+                    - label:
+                        text: "R1 - C2"
+                        text_align: CENTER
+                        align: CENTER
+              - obj:
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 3
+                  styles: style_obj_in_grid
+                  widgets:
+                    - label:
+                        text: "R1 - C3"
+                        align: CENTER
+                        text_align: CENTER
+
+
+
+    - id: second_page # Weather
+      widgets:
+        - obj: # Container for the Energy gauge?
+            x: 10
+            y: 60
+            height: 200
+            width: 200
+            align: TOP_LEFT
+            bg_color: 0xFFFFFF
+            bg_opa: TRANSP
+            border_width: 0
+            pad_all: 0
+            text_font: montserrat_10
+
+
+    - id: third_page # Robovac
+      #skip: true
+      widgets:
+        - label:
+            align: CENTER
+            text: 'Third Page'
+
+
+    - id: fourth_page # Power
       #skip: true
       # Example grid layout
       widgets:
@@ -704,12 +785,14 @@ lvgl:
                     - bar:
                         align: CENTER
                         id: bar_solar_power
-                        value: 75
+                        value: 0
                         min_value: 0
                         max_value: 6000
                         x: 0
                         y: 60
                         width: 80%
+                        indicator:
+                          bg_color: yellow
 
               - obj:
                   grid_cell_row_pos: 0
@@ -736,17 +819,26 @@ lvgl:
                         text: "R0 - C0"
                         text_align: CENTER
                         align: CENTER
-                        x: 0
+                        x: -35
                         y: 30
+                    - label:
+                        id: lbl_battery_charge
+                        text: "R0 - C0"
+                        text_align: CENTER
+                        align: CENTER
+                        x: 45
+                        y: 30  
                     - bar:
                         align: CENTER
                         id: bar_battery_power
-                        value: 75
+                        value: 0
                         min_value: 0
                         max_value: 6000
                         x: 0
                         y: 60
                         width: 80%
+                        indicator:
+                          bg_color: blue
 
               - obj:
                   grid_cell_row_pos: 0
@@ -778,12 +870,14 @@ lvgl:
                     - bar:
                         align: CENTER
                         id: bar_grid_power
-                        value: 75
+                        value: 0
                         min_value: 0
                         max_value: 6000
                         x: 0
                         y: 60
                         width: 80%
+                        indicator:
+                          bg_color: red
 
               - obj:
                   grid_cell_row_pos: 0
@@ -791,16 +885,40 @@ lvgl:
                   styles: style_obj_in_grid
                   widgets: 
                     - label:
-                        text: "R0 - C3"
+                        text: "\U000F1903" # home-lightning-bolt
+                        text_font: mdi_glyphs_large
+                        text_align: CENTER
+                        text_color: black
+                        align: CENTER
+                        x: 0
+                        y: -50
+                    - label:
+                        id: lbl_hosuestate
+                        text: "Using"
                         text_align: CENTER
                         align: CENTER
+                        x: 0
+                        y: 0
                     - label:
-                        id: lbl_battery_charge
+                        id: lbl_house_power
                         text: "R0 - C0"
                         text_align: CENTER
                         align: CENTER
                         x: 0
-                        y: 50  
+                        y: 30
+                    - bar:
+                        align: CENTER
+                        id: bar_house_power
+                        value: 0
+                        min_value: 0
+                        max_value: 6000
+                        x: 0
+                        y: 60
+                        width: 80%
+                        indicator:
+                          bg_color: black
+
+
               - obj:
                   grid_cell_row_pos: 1
                   grid_cell_column_pos: 0
@@ -861,37 +979,7 @@ lvgl:
                         color: 0xFF0000
                         brightness: 100%
 
-    - id: second_page
-      widgets:
-        - obj: # Container for the Energy gauge?
-            x: 10
-            y: 60
-            height: 200
-            width: 200
-            align: TOP_LEFT
-            bg_color: 0xFFFFFF
-            bg_opa: TRANSP
-            border_width: 0
-            pad_all: 0
-            text_font: montserrat_10
-
-
-
-    - id: third_page
-      #skip: true
-      widgets:
-        - label:
-            align: CENTER
-            text: 'Third Page'
-
-    - id: fourth_page
-      #skip: true
-      widgets:
-        - label:
-            align: CENTER
-            text: 'Fourth Page'
-
-    - id: fifth_page
+    - id: fifth_page # Other
       #skip: true
       widgets:
         - label:
