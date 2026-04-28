@@ -449,35 +449,17 @@ font:
     id: mdi_general_glyphs_medium
     size: 25
     glyphs: &mdi_general_glyphs
+      # Page Buttons
       - "\U000F02DC" # home
+      - "\U000F0599" # weather-sunny / sunny
+      - "\U000F070D" # robot-vacuum
+      - "\U000F1903" # home-lightning-bolt
+      - "\U000F056E" # view-dashboard
+      # Energy Page
       - "\U000F1A73" # solar-power-variant
       - "\U000F1901" # home-battery
       - "\U000F0D3E" # transmission-tower
-      - "\U000F1903" # home-lightning-bolt
-      - "\U000F070D" # robot-vacuum
-      - "\U000F056E" # view-dashboard
-
-      - "\U000F0F61" # moon-first-quarter
-      - "\U000F0F62" # moon-full
-      - "\U000F0F63" # moon-last-quarter
-      - "\U000F0F64" # moon-new
-      - "\U000F0F65" # moon-waning-crescent
-      - "\U000F0F66" # moon-waning-gibbous
-      - "\U000F0F67" # moon-waxing-crescent
-      - "\U000F0F68" # moon-waxing-gibbous
-
-      - "\U000F0535" # trending-up
-      - "\U000F0533" # trending-down
-      - "\U000F0534" # trending-neutral
-      - "\U000F0143" # chevron-up
-      - "\U000F013F" # chevron-double-up
-      - "\U000F0DBC" # chevron-triple-up
-      - "\U000F0140" # chevron-down
-      - "\U000F013C" # chevron-double-down
-      - "\U000F0DB9" # chevron-triple-down
-      - "\U000F018C" # compass-outline
-      - "\U000F1885" # flower-pollen
-
+      # Misc
       - "\U000F05CE" # clock-alert-outline
       - "\U000F02D6" # Blank
 
@@ -492,6 +474,7 @@ font:
     id: mdi_weather_glyphs_medium
     size: 25
     glyphs: &mdi_weather_glyphs
+      # Weather
       - "\U000F0594" # weather-night / clear-night
       - "\U000F0590" # weather-cloudy / cloudy
       - "\U000F0591" # weather-fog / fog
@@ -508,7 +491,7 @@ font:
       - "\U000F059E" # weather-windy-variant / windy-variant
       - "\U000F1C78" # weather-hurricane-outline / exceptional
       - "\U000F0F31" # weather-night-partly-cloudy / partlycloudy-night
-
+      # Misc
       - "\U000F02D6" # Blank
 
   - file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
@@ -840,7 +823,7 @@ lvgl:
                         text_font: mdi_weather_glyphs_extra_large
                         text_align: CENTER
                         text_color: black
-                        align: LEFT_MID
+                        align: CENTER
                         x: 0
                         y: -30
 
