@@ -44,7 +44,7 @@ substitutions:
   led_num: '7' # WS2812 ring leds
 
 packages:
-  - !include common/package_connectivity.yaml
+  - !include common/package_wifi.yaml
   - !include common/package_ha_base.yaml
 
 
