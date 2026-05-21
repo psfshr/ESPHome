@@ -6,9 +6,9 @@ substitutions:
   name: lilygo-t-eth-elite-8280e0
   friendly_name: LilyGo T-ETH-Elite 8280e0 Base
 
-#packages:
-#  - !include common/package_wifi.yaml
-#  - !include common/package_ha_base.yaml
+packages:
+  - !include common/package_ethernet.yaml
+  - !include common/package_ha_base.yaml
 
 esphome:
   name: ${name}
@@ -36,15 +36,6 @@ ethernet:
   cs_pin: GPIO45
   interrupt_pin: GPIO14
   #reset_pin: GPIOXX
-
-# Enable Home Assistant API
-api:
-
-ota:
-  platform: esphome
-
-# Enable logging
-logger:
 
 ###############################################################################
 # HOME ASSISTANT BUTTONS ######################################################
