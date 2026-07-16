@@ -1,10 +1,17 @@
+
+# https://github.com/patrickcollins12/esphome-fan-controller/blob/master/console-fan.yaml
+
+
+
+
+
 ###############################################################################
 # BASE DEVICE CONFIG ##########################################################
 ###############################################################################
 
 substitutions:
   name: waveshare-zero-5b7094
-  friendly_name: WaveShare Zero 5b7094 Base
+  friendly_name: WaveShare Zero 5b7094 Rack Fan
 
 packages:
   - !include common/package_wifi.yaml
@@ -38,3 +45,137 @@ logger:
 ###############################################################################
 
 #button:
+
+
+
+
+
+
+
+sensor:
+
+  # Read the Tacho PIN and show measured RPM as a sensor (only with 4-pin PWM fans!)
+  # See instructions here: https://esphome.io/components/sensor/pulse_counter.html
+  - platform: pulse_counter
+    pin: 
+      number: GPIO25   # Connect to any input PIN on the ESP
+      mode: INPUT_PULLUP
+    unit_of_measurement: 'RPM'
+    id: fan_speed
+    name: $friendly_name Fan Speed 1
+    accuracy_decimals: 0
+    filters:
+      - multiply: 0.5  # Depending on how many pulses the fan sends per round - should be 0.5 or 1 - try...
+
+
+  - platform: pulse_counter
+    pin: D7
+    name: ${friendly_name} Fan Speed
+    unit_of_measurement: 'RPM'
+    filters:
+      - multiply: 0.5
+      - lambda: |-
+          if (x <= 1500) return x;
+          else return {};
+    count_mode:
+      rising_edge: INCREMENT
+      falling_edge: DISABLE
+    update_interval: 30s
+
+
+
+
+
+
+
+output:
+  - platform: ledc
+    pin: 25
+    id: fan_pwm
+    frequency: 25000 Hz    # above audible range
+
+fan:
+  - platform: speed
+    output: fan_pwm
+    name: "Cabinet Fan"
+    speed_count: 100
+
+
+
+
+
+
+output:
+  # Wire this pin (13) into the PWM pin of your 12v fan
+  # ledc is the name of the pwm output system on an esp32
+  - platform: ledc
+    id: console_fan_speed
+    pin: GPIO13
+
+    # 25KHz is standard PC fan frequency, minimises buzzing
+    frequency: "25000 Hz" 
+
+    # my fans stop working below 13% powerful.
+    # also they're  powerful and loud, cap their max speed to 80%
+    min_power: 13%
+    max_power: 80%
+
+    # At 0, actually turn it off, otherwise the power keeps going.
+    zero_means_zero: true
+
+  # This proxy output takes its input
+  # if the manual fan control is on, use the level from that
+  # otherwise use the PID control value.
+  # Then publish the result to the fan (ledc) and 
+  # also publish to the template output sensor
+  - platform: template
+    id: proxy_output
+    type: float
+    write_action:
+      lambda: |-
+        float write_val = 
+          (id(manual_fan_control).state) ?
+            id(manual_fan_control).speed / 100.0 : state*1.0;
+        id(console_fan_speed).set_level(write_val);
+        id(fan_speed_pwm_voltage).publish_state(write_val*100.0);
+
+# If you turn this on, you can manually set the fan speed.
+# The PID will be ignored. This is done via the proxy_output.
+fan:
+  - platform: speed
+    id: manual_fan_control
+    output: proxy_output
+    name: "Manual Fan Speed"
+
+
+
+
+
+
+
+
+
+output:
+  - platform: gpio
+    pin: D5
+    id: fan_supply
+  - platform: esp8266_pwm
+    pin: D6
+    frequency: 25000 Hz
+    id: pwmfan
+
+fan:
+  - platform: speed
+    output: pwmfan
+    name: ${friendly_name} Fan
+    on_turn_on:
+      - output.turn_on: fan_supply
+      - logger.log: "Power of Fan turned ON"
+    on_turn_off:
+      - output.turn_off: fan_supply
+      - logger.log: "Power of Fan turned OFF"
+      - delay: 1s
+      - logger.log: "Write 100%% to output pwmfan"
+      - output.set_level:
+          id: pwmfan
+          level: 100%
