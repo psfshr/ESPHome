@@ -35,6 +35,10 @@ substitutions:
   name: waveshare-zero-5b7094
   friendly_name: WaveShare LCD 5b7094
 
+packages:
+  - !include common/package_wifi.yaml
+  - !include common/package_ha_base.yaml
+
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -62,27 +66,6 @@ psram:
   mode: quad
   speed: 80MHz
 
-
-################################################################################
-
-# Wifi information
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: ${name}
-    password: ${name}
-  power_save_mode: NONE
-#  use_address: ${name}.tgv.home
-
-captive_portal:
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: "XbC7pgXBoGvZRAHQOmt1KSZOnKW+sYSlKd4aPu2tHPQ="
-ota:
-  platform: esphome
 
 # Enable logging
 logger:
@@ -170,13 +153,7 @@ time:
 # HOME ASSISTANT BUTTONS ######################################################
 ###############################################################################
 
-button:
-  - platform: shutdown
-    name: ESP32 Shutdown
-  - platform: restart
-    name: ESP32 Restart
-  - platform: safe_mode
-    name: ESP32 Restart (Safe Mode)
+#button:
 
 switch:
   - platform: factory_reset
