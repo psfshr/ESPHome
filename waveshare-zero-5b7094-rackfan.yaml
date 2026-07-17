@@ -1,9 +1,13 @@
 
 # https://github.com/patrickcollins12/esphome-fan-controller/blob/master/console-fan.yaml
+# https://github.com/nordeep/esphome_fan_controller/blob/main/fanmaster.yaml
+# https://github.com/joshuaboniface/smart-pwm-fan-controller/blob/master/fan-controller.yaml
 
-
-
-
+# A 4-pin PWM fan uses
+# Pin 1 for ground (black) - to PSU on black
+# Pin 2 for +12 V power (yellow) -to PSU on white
+# Pin 3 for tachometer speed feedback (green) - to ESP32 on yellow GP1
+# Pin 4 for PWM control (blue) - to ESP32 on orange GP2
 
 ###############################################################################
 # BASE DEVICE CONFIG ##########################################################
@@ -47,7 +51,7 @@ logger:
 
 output:
   - platform: ledc
-    pin: 25
+    pin: 02
     id: fan_pwm
     frequency: 25000 Hz    # above audible range
 
@@ -56,9 +60,6 @@ fan:
     output: fan_pwm
     name: $friendly_name Fan
     speed_count: 100
-    min_power: 10%
-    max_power: 80%
-    zero_means_zero: true
 
 
 ###############################################################################
@@ -85,14 +86,17 @@ sensor:
 
   - platform: pulse_counter
     pin: 
-      number: GPIO25
-      mode: INPUT_PULLUP
+      number: 01
+      inverted: false
+      mode: INPUT_PULLUP        # Pull-up is required for fan tach readings
+    count_mode:
+      rising_edge: INCREMENT    # Count only the rising edge of each tick
+      falling_edge: DISABLE     # Falling edges might result in lingering values
+    use_pcnt: true              # Use the hardware pulse counter explicitly
     unit_of_measurement: 'RPM'
     id: fan_speed
     name: $friendly_name Fan Speed
+    update_interval: 5s 
     accuracy_decimals: 0
     filters:
       - multiply: 0.5
-    count_mode:
-      rising_edge: INCREMENT
-      falling_edge: DISABLE
