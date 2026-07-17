@@ -49,6 +49,13 @@ logger:
 # INPUTS & OUTPUTS ############################################################
 ###############################################################################
 
+# https://esphome.io/components/spi/
+# spi:
+#   clk_pin: GPIOXX
+#   mosi_pin: GPIOXX
+#   miso_pin: GPIOXX
+
+
 output:
   - platform: ledc
     pin: 02
@@ -100,3 +107,13 @@ sensor:
     accuracy_decimals: 0
     filters:
       - multiply: 0.5
+
+  # https://esphome.io/components/sensor/bme280/
+  # - platform: bme280_spi
+  #   temperature:
+  #     name: "BME280 Temperature"
+  #   pressure:
+  #     name: "BME280 Pressure"
+  #   humidity:
+  #     name: "BME280 Humidity"
+  #   cs_pin: GPIOXX
