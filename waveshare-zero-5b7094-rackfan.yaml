@@ -9,6 +9,17 @@
 # Pin 3 for tachometer speed feedback (green) - to ESP32 on yellow GP1
 # Pin 4 for PWM control (blue) - to ESP32 on orange GP2
 
+
+# https://passionelectronique.fr/tutorial-bme280/
+
+# Red - VCC
+# Brown - GND
+# Orange - SCL - 7 - SCK - Serial Clock - CLK
+# Yellow - SDA - 8 - SDI - MOSI
+# Green - CSB - 9 - CSL - Chip Select - CS
+# Blue - SDO - 10 - SDO - Serial Data Out - MISO
+
+
 ###############################################################################
 # BASE DEVICE CONFIG ##########################################################
 ###############################################################################
@@ -50,10 +61,10 @@ logger:
 ###############################################################################
 
 # https://esphome.io/components/spi/
-# spi:
-#   clk_pin: GPIOXX
-#   mosi_pin: GPIOXX
-#   miso_pin: GPIOXX
+spi:
+  clk_pin: 7
+  mosi_pin: 8
+  miso_pin: 10
 
 
 output:
@@ -110,11 +121,11 @@ sensor:
       - multiply: 0.5
 
   # https://esphome.io/components/sensor/bme280/
-  # - platform: bme280_spi
-  #   temperature:
-  #     name: "BME280 Temperature"
-  #   pressure:
-  #     name: "BME280 Pressure"
-  #   humidity:
-  #     name: "BME280 Humidity"
-  #   cs_pin: GPIOXX
+  - platform: bme280_spi
+    temperature:
+      name: $friendly_name Temperature
+    pressure:
+      name: $friendly_name Pressure
+    humidity:
+      name: $friendly_name Humidity
+    cs_pin: 9
