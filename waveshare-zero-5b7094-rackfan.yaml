@@ -3,6 +3,8 @@
 # https://github.com/nordeep/esphome_fan_controller/blob/main/fanmaster.yaml
 # https://github.com/joshuaboniface/smart-pwm-fan-controller/blob/master/fan-controller.yaml
 
+# https://github.com/zeroflow/wifi-fancontroller/blob/main/modules/temperature_linear.yaml
+
 # A 4-pin PWM fan uses
 # Pin 1 for ground (black) - to PSU on black
 # Pin 2 for +12 V power (yellow) -to PSU on white
