@@ -1,0 +1,224 @@
+###############################################################################
+# NOTES #######################################################################
+###############################################################################
+
+# https://wiki.lilygo.cc/products/t-eth-series/t-eth-elite/
+
+
+# https://www.aliexpress.com/item/1005005791515997.html
+# Resolution:480*320
+# Drive ic:ili9488
+
+# 1 VCC power input (3.3V~5V) - 5V - White
+# 2 GND power supply ground - Purple
+
+## Need to change GPIOs!
+
+# 3 CS LCD film selection - GPIO7 - Brown
+# 4 RESET LCD reset - GPIO8 - Red
+# 5 DC LCD bus command/data selection - GPIO9 - Orange
+# 6 SDI (MoSi) LCD SPI display bus data input - GPIO10 - Yellow
+# 7 SCK LCD SPI display bus clock signal - GPIO11 - Green
+# 8 LED LCD backlight control (high level lighting) - GPIO12 - Blue
+# 9 SDO (MISO) LCD SPI display bus data input and output - GPIO13 - Purple
+
+# 10 t _ clk SPI bus clock signal of touch panel - GPIO06 - Yellow
+# 11 t _ cs Chip selection of SPI bus for touch panel - GPIO05 - Green
+# 12 t _ din touch panel SPI bus data input - GPIO04 - Blue
+# 13 t _ do touch panel SPI bus data output - GPIO03 - Purple
+# 14 t _ IRQ touch panel interrupts IRQ signal - GPIO02 - Grey
+
+
+# Ethernet
+# clk_pin: GPIO48
+# mosi_pin: GPIO21
+# miso_pin: GPIO47
+# cs_pin: GPIO45
+# interrupt_pin: GPIO14
+
+
+
+###############################################################################
+# BASE DEVICE CONFIG ##########################################################
+###############################################################################
+
+substitutions:
+  name: lilygo-t-eth-elite-8280e0
+  friendly_name: LilyGo T-ETH-Elite 8280e0 Base
+
+packages:
+  - !include common/package_ethernet.yaml
+  - !include common/package_ha_base.yaml
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+###############################################################################
+
+# # Ethernet (T-ETH-ELite)
+ethernet:
+  type: W5500
+  clk_pin: GPIO48
+  mosi_pin: GPIO21
+  miso_pin: GPIO47
+  cs_pin: GPIO45
+  interrupt_pin: GPIO14
+  #reset_pin: GPIOXX
+
+###############################################################################
+# INPUTS & OUTPUTS ############################################################
+###############################################################################
+
+spi:
+  - id: spi_lcd
+    mosi_pin: GPIO10
+    clk_pin: GPIO11
+    miso_pin: GPIO13
+    interface: any
+  - id: spi_touch
+    mosi_pin: GPIO4
+    clk_pin: GPIO6
+    miso_pin: GPIO3
+    interface: any
+
+output:
+  - platform: gpio
+    pin:
+      number: GPIO21
+      mode: output
+    id: LED
+  - platform: ledc # Define a PWM output on the ESP32
+    pin: GPIO12
+    id: backlight_pwm
+
+# Define a monochromatic, dimmable light for the backlight
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: back_light
+    restore_mode: ALWAYS_ON
+
+###############################################################################
+# VARIABLES & SCRIPTS #########################################################
+###############################################################################
+
+
+
+###############################################################################
+# SENSORS #####################################################################
+###############################################################################
+
+binary_sensor:
+  - platform: touchscreen
+    id: general_touch
+    x_min: 0
+    x_max: 319
+    y_min: 0
+    y_max: 479
+    on_click:
+      min_length: 0ms
+      max_length: 500ms
+      then:
+        - component.update: lcd_display
+
+
+
+
+
+
+
+###############################################################################
+# FONTS & TEXT ################################################################
+###############################################################################
+
+# Include custom fonts
+font:
+  - file:
+      type: gfonts
+      family: Montserrat
+      weight: 500
+    id: text_med
+    size: 25
+    extras:
+      file:
+        type: gfonts
+        family: Montserrat
+        weight: 500
+      glyphs: [ "'", "£" ]
+
+
+
+
+###############################################################################
+# DISPLAY RENDERING ###########################################################
+###############################################################################
+
+touchscreen:
+  - platform: xpt2046
+    id: my_touchscreen
+    spi_id: spi_touch
+    display: lcd_display
+    cs_pin: GPIO5
+    #interrupt_pin: GPIO2
+    update_interval: 50ms
+    threshold: 400
+    transform:
+      swap_xy: false
+      mirror_x: false
+      mirror_y: false
+    calibration:
+      x_min: 250
+      x_max: 3800
+      y_min: 208
+      y_max: 3896
+    on_touch:
+      - lambda: |-
+            ESP_LOGI("Touch:touch : ", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+                touch.x,
+                touch.y,
+                touch.x_raw,
+                touch.y_raw
+                );
+
+display:
+  - platform: ili9xxx
+    model: ILI9488_A
+    id: lcd_display
+    spi_id: spi_lcd
+    dc_pin: GPIO9
+    reset_pin: GPIO8
+    cs_pin: GPIO7
+    color_order: bgr
+    invert_colors: false
+    transform:
+      swap_xy: false
+      mirror_x: true
+      mirror_y: false
+    dimensions:
+      height: 480
+      width: 320
+    update_interval: 5s
+#    show_test_card: true
+    lambda: |-
+
+      // Panel
+      int panel_x = it.get_width();
+      int panel_y = it.get_height();
+      int panel_x_mid = panel_x / 2;
+      int panel_y_mid = panel_y / 2;
+
+      it.printf(panel_x_mid, panel_y_mid, id(text_med), TextAlign::CENTER, "Hello");
+
