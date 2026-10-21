@@ -5,16 +5,16 @@
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  ap:
-    ssid: ${name}
-    password: ${name}
+#  ap:
+#    ssid: ${name}
+#    password: ${name}
   power_save_mode: NONE
   on_connect:
     - logger.log: "WiFi connected"
   on_disconnect:
     - logger.log: "WiFI disconnected"
 
-captive_portal:
+#captive_portal:
 
 api:
 

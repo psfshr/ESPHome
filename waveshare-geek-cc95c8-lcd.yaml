@@ -47,10 +47,6 @@ psram:
 
 ################################################################################
 
-# Wifi information
-
-# Enable Home Assistant API
-
 # Enable logging
 logger:
 
